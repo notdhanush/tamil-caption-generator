@@ -61,7 +61,7 @@ try:
 
     # Configure Gemini API Key
     genai.configure(api_key=st.secrets["gemini_api_key"])
-    generative_model = genai.GenerativeModel("gemini-pro")
+    generative_model = genai.GenerativeModel("gemini-1.5-flash")
     
     auth_success = True
 except (KeyError, json.JSONDecodeError):
