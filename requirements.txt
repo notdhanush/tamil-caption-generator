@@ -1,4 +1,5 @@
-streamlit==1.28.0
-google-cloud-speech==2.21.0
-google-generativeai==0.3.0
-pydub==0.25.1
+streamlit
+google-cloud-speech
+google-generativeai
+pydub
+audioop-lts
