@@ -6,6 +6,16 @@ import json
 from pydub import AudioSegment
 import io
 from datetime import timedelta
+import json
+import streamlit as st
+from google.oauth2 import service_account
+
+# Load Google JSON from secrets
+creds_dict = json.loads(st.secrets["google_credentials_json"])
+credentials = service_account.Credentials.from_service_account_info(creds_dict)
+
+# Gemini
+GEMINI_API_KEY = st.secrets["gemini_api_key"]
 
 # --- Page Configuration ---
 # Must be the first Streamlit command in your script
