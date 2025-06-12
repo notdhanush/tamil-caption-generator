@@ -42,7 +42,7 @@ st.markdown("""
         background: #F8FFF8;
         margin-top: 1rem;
     }
-    .cost-info {
+    .info-box {
         padding: 0.5rem;
         border-radius: 5px;
         background: #e3f2fd;
@@ -271,8 +271,6 @@ if 'editing_mode' not in st.session_state:
     st.session_state.editing_mode = False
 if 'save_message' not in st.session_state:
     st.session_state.save_message = ""
-if 'api_calls_made' not in st.session_state:
-    st.session_state.api_calls_made = 0
 if 'original_translations' not in st.session_state:
     st.session_state.original_translations = {}
 
@@ -293,14 +291,6 @@ col1, col2 = st.columns([1, 1], gap="large")
 with col1:
     st.header("📤 Upload & Transcribe")
     
-    # Cost information
-    st.markdown("""
-    <div class="cost-info">
-        💰 <strong>Pricing:</strong> ₹1.25 per minute of audio<br>
-        ✨ <strong>Unlimited editing included!</strong> Edit as many times as you want at no extra cost.
-    </div>
-    """, unsafe_allow_html=True)
-    
     uploaded_file = st.file_uploader(
         "Choose your audio file",
         type=["wav", "mp3", "flac", "m4a", "ogg"],
@@ -310,15 +300,13 @@ with col1:
     if uploaded_file:
         st.audio(uploaded_file)
         
-        # Calculate audio duration and cost
+        # Calculate audio duration
         audio_segment = AudioSegment.from_file(uploaded_file)
         duration_minutes = len(audio_segment) / (1000 * 60)  # Convert to minutes
-        estimated_cost = duration_minutes * 1.25
         
         st.markdown(f"""
-        <div class="cost-info">
+        <div class="info-box">
             📊 <strong>Audio Duration:</strong> {duration_minutes:.1f} minutes<br>
-            💵 <strong>Processing Cost:</strong> ₹{estimated_cost:.2f}<br>
             🎯 <strong>What you get:</strong> Tamil + Tanglish + English + Unlimited Editing
         </div>
         """, unsafe_allow_html=True)
@@ -345,7 +333,6 @@ with col1:
                     # Reset states
                     st.session_state.editing_mode = False
                     st.session_state.save_message = ""
-                    st.session_state.api_calls_made = 0
                     
                     # Generate audio hash for caching
                     audio_content = uploaded_file.getvalue()
@@ -364,7 +351,7 @@ with col1:
                         st.session_state.timestamps = cached_results.get('timestamps', [])
                         st.session_state.original_translations = cached_results
                         st.session_state.editing_mode = True
-                        st.success("✅ Loaded from cache - No API cost!")
+                        st.success("✅ Loaded from cache!")
                         st.rerun()
                     
                     # Process audio with pydub
@@ -375,7 +362,7 @@ with col1:
                     audio_segment.export(buffer, format="flac")
                     content = buffer.getvalue()
                     
-                    # Call Google Speech-to-Text API (COST: ₹1.04 per minute)
+                    # Call Google Speech-to-Text API
                     recognition_audio = speech.RecognitionAudio(content=content)
                     config = speech.RecognitionConfig(
                         encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
@@ -388,7 +375,6 @@ with col1:
                     )
 
                     response = speech_client.recognize(config=config, audio=recognition_audio)
-                    st.session_state.api_calls_made += 1
                     
                     if not response.results:
                         st.warning("Could not transcribe the audio. The file might be silent or the language settings incorrect.")
@@ -408,8 +394,7 @@ with col1:
                     
                     tamil_transcript = full_transcript.strip()
                     
-                    # Generate ALL translations in ONE GO (COST: ₹0.21 per minute)
-                    st.session_state.api_calls_made += 1
+                    # Generate ALL translations in ONE GO
                     translations = generate_initial_translations(tamil_transcript)
                     
                     # Store everything
@@ -426,9 +411,7 @@ with col1:
                     
                     st.session_state.editing_mode = True
                     
-                    # Show cost breakdown
-                    actual_cost = st.session_state.api_calls_made * (duration_minutes * 0.625)  # Approx API cost
-                    st.success(f"✅ Complete! Total API calls: {st.session_state.api_calls_made} (₹{actual_cost:.2f})")
+                    st.success("✅ Transcription complete!")
                     st.rerun()
 
                 except Exception as e:
@@ -443,8 +426,7 @@ with col2:
         st.markdown("""
         <div class="edit-info">
             ✨ <strong>Unlimited Editing Mode</strong><br>
-            Edit as much as you want - no additional API costs!<br>
-            Changes are processed locally for instant updates.
+            Edit as much as you want - changes are processed locally for instant updates.
         </div>
         """, unsafe_allow_html=True)
         
@@ -457,7 +439,7 @@ with col2:
         with col_edit1:
             st.subheader("✏️ Edit Mode")
         with col_edit2:
-            if st.button("🔄 Smart Sync", help="Sync other languages with your edits (no API cost)"):
+            if st.button("🔄 Smart Sync", help="Sync other languages with your edits locally"):
                 with st.spinner("Syncing languages locally..."):
                     synced_result, change_type = smart_text_sync(
                         st.session_state.tanglish_transcript, 
@@ -473,16 +455,14 @@ with col2:
                     st.rerun()
         
         with col_edit3:
-            if st.button("🔄 Re-translate", help="Use AI to re-translate (costs ₹0.21)"):
+            if st.button("🔄 Re-translate", help="Use AI to re-translate"):
                 with st.spinner("Re-translating with AI..."):
                     try:
-                        # This is the ONLY edit operation that costs money
                         new_translations = generate_initial_translations(st.session_state.tanglish_transcript)
-                        st.session_state.api_calls_made += 1
                         
                         st.session_state.tamil_transcript = new_translations['tamil']
                         st.session_state.english_transcript = new_translations['english']
-                        st.session_state.save_message = f"✅ Re-translated with AI! (API call #{st.session_state.api_calls_made})"
+                        st.session_state.save_message = "✅ Re-translated with AI!"
                         st.rerun()
                     except Exception as e:
                         st.error(f"Re-translation failed: {e}")
@@ -495,7 +475,7 @@ with col2:
             value=st.session_state.tanglish_transcript,
             height=200,
             key="tanglish_editor",
-            help="Edit in Tanglish - unlimited edits, no extra cost!"
+            help="Edit in Tanglish - unlimited edits!"
         )
         
         # Update session state when text changes
@@ -617,13 +597,3 @@ if st.session_state.editing_mode and st.session_state.tanglish_transcript:
 # Show initial message
 if not st.session_state.editing_mode and not st.session_state.processing_translations:
     st.info("👆 Upload an audio file above to get started!")
-    
-    # Show API cost tracker
-    if st.session_state.api_calls_made > 0:
-        st.markdown(f"""
-        <div class="cost-info">
-            📊 <strong>Session Stats:</strong><br>
-            API Calls Made: {st.session_state.api_calls_made}<br>
-            Estimated Cost: ₹{st.session_state.api_calls_made * 0.625:.2f}
-        </div>
-        """, unsafe_allow_html=True)
