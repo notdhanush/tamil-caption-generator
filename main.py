@@ -13,12 +13,16 @@ st.set_page_config(
     page_title="Tamil Caption Generator",
     page_icon="🗣️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Hide sidebar by default
 )
 
-# --- Custom CSS for Styling ---
+# --- Hide Sidebar Completely ---
 st.markdown("""
 <style>
+    .css-1d391kg {display: none}
+    section[data-testid="stSidebar"] {
+        display: none;
+    }
     .main-header {
         text-align: center;
         padding: 1rem;
@@ -50,6 +54,14 @@ st.markdown("""
         border: 2px solid #007BFF;
         background: #F8F9FF;
         margin-top: 1rem;
+    }
+    .save-success {
+        padding: 0.5rem;
+        border-radius: 5px;
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        margin: 0.5rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -130,7 +142,6 @@ if auth_success:
         # Configure Gemini API Key
         if "gemini_api_key" in st.secrets:
             genai.configure(api_key=st.secrets["gemini_api_key"])
-            # Use the updated model name
             generative_model = genai.GenerativeModel("gemini-1.5-flash")
         else:
             auth_success = False
@@ -199,72 +210,6 @@ def translate_tanglish_to_english(tanglish_text):
     except Exception as e:
         return f"Translation Error: {e}"
 
-# --- Sidebar ---
-with st.sidebar:
-    st.header("⚙️ Settings")
-    st.info("This app uses Google Cloud and Gemini AI. Ensure your API keys are set in Streamlit's Secrets Manager.")
-
-    if not auth_success:
-        st.markdown('<div class="error-box">', unsafe_allow_html=True)
-        st.error("🚨 Authentication Failed!")
-        st.write(f"**Error:** {auth_message}")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.subheader("📋 Setup Instructions")
-        st.write("Add your credentials to Streamlit Secrets. You have two options:")
-        
-        st.write("**Option 1: Complete JSON (Recommended)**")
-        st.code('''
-# secrets.toml
-google_credentials_json = """
-{
-  "type": "service_account",
-  "project_id": "your-project-id",
-  "private_key_id": "your-private-key-id",
-  "private_key": "-----BEGIN PRIVATE KEY-----\\nYour-Private-Key-Here\\n-----END PRIVATE KEY-----\\n",
-  "client_email": "your-service-account@your-project.iam.gserviceaccount.com",
-  "client_id": "your-client-id",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/your-service-account%40your-project.iam.gserviceaccount.com"
-}
-"""
-
-gemini_api_key = "your-gemini-api-key"
-        ''')
-        
-        st.write("**Option 2: Individual Fields**")
-        st.code('''
-# secrets.toml
-project_id = "your-project-id"
-private_key = "-----BEGIN PRIVATE KEY-----\\nYour-Private-Key-Here\\n-----END PRIVATE KEY-----\\n"
-client_email = "your-service-account@your-project.iam.gserviceaccount.com"
-gemini_api_key = "your-gemini-api-key"
-        ''')
-        
-        st.warning("⚠️ **Common Issues:**")
-        st.write("• Ensure private key includes newlines (\\n)")
-        st.write("• Private key must start with `-----BEGIN PRIVATE KEY-----`")
-        st.write("• Private key must end with `-----END PRIVATE KEY-----`")
-        st.write("• Check for any missing commas or quotes in JSON")
-        st.write("• Verify all required fields are present")
-        
-    else:
-        st.success("✅ Authentication Successful!")
-
-    st.subheader("🗣️ Language Settings")
-    primary_language = st.selectbox(
-        "Primary Transcription Language",
-        ["ta-IN", "en-IN", "hi-IN"],
-        help="The main language spoken in the audio."
-    )
-    secondary_language = st.selectbox(
-        "Secondary Language",
-        ["en-IN", "ta-IN", "hi-IN"],
-        help="A fallback language if needed."
-    )
-
 # --- Initialize Session State ---
 if 'original_transcript' not in st.session_state:
     st.session_state.original_transcript = ""
@@ -278,6 +223,12 @@ if 'timestamps' not in st.session_state:
     st.session_state.timestamps = []
 if 'processing_translations' not in st.session_state:
     st.session_state.processing_translations = False
+if 'editing_mode' not in st.session_state:
+    st.session_state.editing_mode = False
+if 'save_message' not in st.session_state:
+    st.session_state.save_message = ""
+if 'auto_update_translations' not in st.session_state:
+    st.session_state.auto_update_translations = True
 
 # --- Main App UI ---
 st.markdown("""
@@ -287,6 +238,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Show authentication error if needed (without exposing technical details)
+if not auth_success:
+    st.error("⚠️ Service is currently unavailable. Please try again later.")
+    st.stop()
+
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
@@ -294,15 +250,35 @@ with col1:
     uploaded_file = st.file_uploader(
         "Choose your audio file",
         type=["wav", "mp3", "flac", "m4a", "ogg"],
-        help="Supports most common audio formats"
+        help="Supports most common audio formats (Max: 200MB)"
     )
 
-    if uploaded_file and auth_success:
+    if uploaded_file:
         st.audio(uploaded_file)
+        
+        # Language settings in main area (instead of sidebar)
+        with st.expander("🗣️ Language Settings (Optional)", expanded=False):
+            col_lang1, col_lang2 = st.columns(2)
+            with col_lang1:
+                primary_language = st.selectbox(
+                    "Primary Language",
+                    ["ta-IN", "en-IN", "hi-IN"],
+                    help="Main language in the audio"
+                )
+            with col_lang2:
+                secondary_language = st.selectbox(
+                    "Secondary Language",
+                    ["en-IN", "ta-IN", "hi-IN"],
+                    help="Fallback language"
+                )
         
         if st.button("🧠 Transcribe Audio", type="primary", use_container_width=True):
             with st.spinner("Processing audio and transcribing..."):
                 try:
+                    # Reset editing mode
+                    st.session_state.editing_mode = False
+                    st.session_state.save_message = ""
+                    
                     # 1. Process Audio with pydub
                     audio_segment = AudioSegment.from_file(uploaded_file)
                     # Standardize for Google API: 16kHz, mono
@@ -352,51 +328,83 @@ with col1:
 
                 except Exception as e:
                     st.error(f"An error occurred during transcription: {e}")
-    elif not auth_success:
-        st.warning("Please configure your API keys in the sidebar to begin.")
 
 with col2:
-    st.header("📝 Edit in Tanglish")
+    st.header("📝 Edit Transcript")
 
     # Auto-generate translations after transcription
     if st.session_state.processing_translations and st.session_state.original_transcript:
         with st.spinner("Generating translations..."):
-            # Generate Tanglish version for editing
+            # Generate all versions
             st.session_state.tanglish_transcript = translate_to_tanglish(st.session_state.original_transcript)
+            st.session_state.tamil_transcript = st.session_state.original_transcript
+            st.session_state.english_transcript = translate_to_english(st.session_state.original_transcript)
             st.session_state.processing_translations = False
+            st.session_state.editing_mode = True
             st.rerun()
 
-    if st.session_state.tanglish_transcript:
-        st.subheader("✏️ Edit Transcript (Tanglish)")
-        st.info("💡 Edit in Tanglish for easier understanding. Tamil and English versions will be updated automatically when you download.")
+    if st.session_state.tanglish_transcript and st.session_state.editing_mode:
+        # Show save message if exists
+        if st.session_state.save_message:
+            st.markdown(f'<div class="save-success">{st.session_state.save_message}</div>', unsafe_allow_html=True)
         
+        # Edit mode toggle
+        col_edit1, col_edit2 = st.columns([3, 1])
+        with col_edit1:
+            st.subheader("✏️ Edit Mode")
+        with col_edit2:
+            if st.button("💾 Save Changes", type="primary"):
+                # Auto-update other language versions when saving
+                with st.spinner("Updating all language versions..."):
+                    try:
+                        # Update Tamil and English based on edited Tanglish
+                        st.session_state.tamil_transcript = translate_tanglish_to_tamil(st.session_state.tanglish_transcript)
+                        st.session_state.english_transcript = translate_tanglish_to_english(st.session_state.tanglish_transcript)
+                        st.session_state.save_message = "✅ Changes saved! All language versions updated."
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error updating translations: {e}")
+        
+        st.info("💡 Edit in Tanglish for easier understanding. Click 'Save Changes' to update Tamil and English versions.")
+        
+        # Editing area
         edited_tanglish = st.text_area(
-            "Make corrections in Tanglish:",
+            "Edit your transcript:",
             value=st.session_state.tanglish_transcript,
             height=200,
-            help="Edit in Tanglish (Tamil written in English letters) for easier editing"
+            key="tanglish_editor",
+            help="Edit in Tanglish (Tamil written in English letters)"
         )
         
         # Update session state when text is changed
         if edited_tanglish != st.session_state.tanglish_transcript:
             st.session_state.tanglish_transcript = edited_tanglish
+            st.session_state.save_message = ""  # Clear save message when editing
         
-        # Show preview of original Tamil
-        if st.session_state.original_transcript:
-            with st.expander("📖 View Original Tamil Transcript"):
-                st.write(st.session_state.original_transcript)
+        # Show preview tabs for all languages
+        st.subheader("📖 Language Previews")
+        tab1, tab2, tab3 = st.tabs(["🔤 Tanglish", "🕉️ Tamil", "🌍 English"])
+        
+        with tab1:
+            st.text_area("Current Tanglish:", value=st.session_state.tanglish_transcript, height=100, disabled=True)
+        
+        with tab2:
+            st.text_area("Current Tamil:", value=st.session_state.tamil_transcript, height=100, disabled=True)
+        
+        with tab3:
+            st.text_area("Current English:", value=st.session_state.english_transcript, height=100, disabled=True)
 
 # --- Export Section ---
-if st.session_state.tanglish_transcript:
+if st.session_state.tanglish_transcript and st.session_state.editing_mode:
     st.markdown("---")
-    st.header("📥 Export Options")
+    st.header("📥 Download Options")
     
-    # Language selection for export
+    # Language and format selection
     col_lang, col_format = st.columns([1, 1])
     
     with col_lang:
         export_language = st.selectbox(
-            "🌍 Select Language for Download:",
+            "🌍 Select Language:",
             ["Tanglish", "Tamil", "English"],
             help="Choose which language version to download"
         )
@@ -451,19 +459,17 @@ if st.session_state.tanglish_transcript:
         
         return srt_content
 
-    # Export buttons
+    # Single download button
     if st.button("📥 Generate & Download", type="primary", use_container_width=True):
-        with st.spinner(f"Generating {export_language} version..."):
+        with st.spinner(f"Preparing {export_language} {export_format} file..."):
             try:
                 # Get the text in selected language
                 if export_language == "Tanglish":
                     export_text = st.session_state.tanglish_transcript
                 elif export_language == "Tamil":
-                    # Generate Tamil from current Tanglish
-                    export_text = translate_tanglish_to_tamil(st.session_state.tanglish_transcript)
+                    export_text = st.session_state.tamil_transcript
                 else:  # English
-                    # Generate English from current Tanglish
-                    export_text = translate_tanglish_to_english(st.session_state.tanglish_transcript)
+                    export_text = st.session_state.english_transcript
                 
                 # Generate download based on format
                 if export_format == "TXT":
@@ -492,57 +498,11 @@ if st.session_state.tanglish_transcript:
                 if export_format == "SRT":
                     st.code(file_data[:500] + "..." if len(file_data) > 500 else file_data)
                 else:
-                    st.write(export_text[:300] + "..." if len(export_text) > 300 else export_text)
+                    st.text_area("Preview:", value=export_text, height=150, disabled=True)
                 
             except Exception as e:
                 st.error(f"Error generating {export_language} version: {e}")
 
-    # Quick download buttons for all formats
-    st.subheader("🚀 Quick Downloads")
-    quick_col1, quick_col2, quick_col3 = st.columns(3)
-    
-    with quick_col1:
-        if st.button("📄 Tanglish TXT", use_container_width=True):
-            st.download_button(
-                label="Download Tanglish TXT",
-                data=st.session_state.tanglish_transcript,
-                file_name="transcript_tanglish.txt",
-                mime="text/plain",
-            )
-    
-    with quick_col2:
-        if st.button("🎬 Tanglish SRT", use_container_width=True):
-            srt_data = create_srt(st.session_state.tanglish_transcript, st.session_state.timestamps)
-            st.download_button(
-                label="Download Tanglish SRT",
-                data=srt_data,
-                file_name="subtitles_tanglish.srt",
-                mime="text/plain",
-            )
-    
-    with quick_col3:
-        st.info("Use 'Generate & Download' above for Tamil and English versions")
-
-    # Show all versions preview
-    if st.checkbox("🔍 Show All Language Previews"):
-        st.subheader("📖 Language Previews")
-        
-        tab1, tab2, tab3 = st.tabs(["🔤 Tanglish", "🕉️ Tamil", "🌍 English"])
-        
-        with tab1:
-            st.write("**Current Tanglish Version:**")
-            st.write(st.session_state.tanglish_transcript)
-        
-        with tab2:
-            if st.button("Generate Tamil Preview"):
-                with st.spinner("Translating to Tamil..."):
-                    tamil_preview = translate_tanglish_to_tamil(st.session_state.tanglish_transcript)
-                    st.write("**Tamil Version:**")
-                    st.write(tamil_preview)
-        
-        with tab3:
-            if st.button("Generate English Preview"):
-                with st.spinner("Translating to English..."):
-                    english_preview = translate_tanglish_to_english(st.session_state.tanglish_transcript)
-                    st.write("**English Version:**")
-                    st.write(english_preview)
+# Show initial message when no transcript is available
+if not st.session_state.tanglish_transcript and not st.session_state.processing_translations:
+    st.info("👆 Upload an audio file above to get started!")
