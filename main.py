@@ -1082,7 +1082,7 @@ st.markdown("""
 <div style="text-align: center; color: #6c757d; padding: 1rem;">
     <p>Made with ❤️ for the Tamil community | Powered by AI</p>
 </div>
-""", unsafe_allow_html=True)=True)
+""", unsafe_allow_html=True)
         
         # Calculate duration
         try:
@@ -1259,4 +1259,4 @@ st.markdown("""
                     st.error(f"❌ An error occurred during processing: {str(e)}")
                     st.error("Please try again or contact support if the problem persists.")
     
-    st.markdown('</div>', """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
