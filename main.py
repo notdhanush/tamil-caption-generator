@@ -8,7 +8,6 @@ import io
 from datetime import timedelta
 import hashlib
 import time
-import base64
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -553,6 +552,92 @@ with col1:
             st.markdown('<div class="audio-container">', unsafe_allow_html=True)
             st.audio(uploaded_file)
             st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Calculate duration
+        try:
+            if is_video:
+                # For video files, we'll estimate duration differently
+                file_size_mb = len(uploaded_file.getvalue()) / (1024 * 1024)
+                estimated_duration = file_size_mb / 2  # Rough estimate
+                duration_text = f"~{estimated_duration:.1f} minutes (estimated)"
+            else:
+                audio_segment = AudioSegment.from_file(uploaded_file)
+                duration_minutes = len(audio_segment) / (1000 * 60)
+                duration_text = f"{duration_minutes:.1f} minutes"
+        except:
+            duration_text = "Duration calculation unavailable"
+        
+        st.markdown(f"""
+        <div class="info-box">
+            📊 <strong>File Info:</strong> {uploaded_file.name}<br>
+            ⏱️ <strong>Duration:</strong> {duration_text}<br>
+            🎯 <strong>Output:</strong> Tamil + Tanglish + English + Unlimited Editing
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Enhanced Language settings
+        with st.expander("🗣️ Advanced Language Settings", expanded=False):
+            col_lang1, col_lang2 = st.columns(2)
+            with col_lang1:
+                primary_language = st.selectbox(
+                    "Primary Language",
+                    ["ta-IN", "en-IN", "hi-IN"],
+                    help="Main language in the audio/video"
+                )
+            with col_lang2:
+                secondary_language = st.selectbox(
+                    "Secondary Language",
+                    ["en-IN", "ta-IN", "hi-IN"],
+                    help="Fallback language for mixed content"
+                )
+            
+            enable_punctuation = st.checkbox("Enable Auto Punctuation", value=True)
+            enable_word_timestamps = st.checkbox("Enable Word Timestamps", value=True)
+        
+        if st.button("🧠 Process File", type="primary", use_container_width=True):
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            with st.spinner("Processing your file..."):
+                try:
+                    # Reset states
+                    st.session_state.editing_mode = False
+                    st.session_state.save_message = ""
+                    
+                    status_text.text("📁 Reading file...")
+                    progress_bar.progress(10)
+                    
+                    # Generate audio hash for caching
+                    audio_content = uploaded_file.getvalue()
+                    audio_hash = get_audio_hash(audio_content)
+                    st.session_state.audio_hash = audio_hash
+                    
+                    # Check cache
+                    status_text.text("🔍 Checking cache...")
+                    progress_bar.progress(20)
+                    
+                    cached_results = get_cached_translations(audio_hash)
+                    
+                    if cached_results:
+                        status_text.text("⚡ Loading from cache...")
+                        progress_bar.progress(100)
+                        
+                        st.session_state.original_transcript = cached_results['tamil']
+                        st.session_state.tamil_transcript = cached_results['tamil']
+                        st.session_state.tanglish_transcript = cached_results['tanglish']
+                        st.session_state.english_transcript = cached_results['english']
+                        st.session_state.timestamps = cached_results.get('timestamps', [])
+                        st.session_state.original_translations = cached_results
+                        st.session_state.editing_mode = True
+                        
+                        st.success("🎉 File processed successfully!")
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ An error occurred during processing: {str(e)}")
+                    st.error("Please try again or contact support if the problem persists.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     st.markdown('<div class="edit-card">', unsafe_allow_html=True)
@@ -1082,86 +1167,7 @@ st.markdown("""
 <div style="text-align: center; color: #6c757d; padding: 1rem;">
     <p>Made with ❤️ for the Tamil community | Powered by AI</p>
 </div>
-""", unsafe_allow_html=True)
-        
-        # Calculate duration
-        try:
-            if is_video:
-                # For video files, we'll estimate duration differently
-                file_size_mb = len(uploaded_file.getvalue()) / (1024 * 1024)
-                estimated_duration = file_size_mb / 2  # Rough estimate
-                duration_text = f"~{estimated_duration:.1f} minutes (estimated)"
-            else:
-                audio_segment = AudioSegment.from_file(uploaded_file)
-                duration_minutes = len(audio_segment) / (1000 * 60)
-                duration_text = f"{duration_minutes:.1f} minutes"
-        except:
-            duration_text = "Duration calculation unavailable"
-        
-        st.markdown(f"""
-        <div class="info-box">
-            📊 <strong>File Info:</strong> {uploaded_file.name}<br>
-            ⏱️ <strong>Duration:</strong> {duration_text}<br>
-            🎯 <strong>Output:</strong> Tamil + Tanglish + English + Unlimited Editing
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Enhanced Language settings
-        with st.expander("🗣️ Advanced Language Settings", expanded=False):
-            col_lang1, col_lang2 = st.columns(2)
-            with col_lang1:
-                primary_language = st.selectbox(
-                    "Primary Language",
-                    ["ta-IN", "en-IN", "hi-IN"],
-                    help="Main language in the audio/video"
-                )
-            with col_lang2:
-                secondary_language = st.selectbox(
-                    "Secondary Language",
-                    ["en-IN", "ta-IN", "hi-IN"],
-                    help="Fallback language for mixed content"
-                )
-            
-            enable_punctuation = st.checkbox("Enable Auto Punctuation", value=True)
-            enable_word_timestamps = st.checkbox("Enable Word Timestamps", value=True)
-        
-        if st.button("🧠 Process File", type="primary", use_container_width=True):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            with st.spinner("Processing your file..."):
-                try:
-                    # Reset states
-                    st.session_state.editing_mode = False
-                    st.session_state.save_message = ""
-                    
-                    status_text.text("📁 Reading file...")
-                    progress_bar.progress(10)
-                    
-                    # Generate audio hash for caching
-                    audio_content = uploaded_file.getvalue()
-                    audio_hash = get_audio_hash(audio_content)
-                    st.session_state.audio_hash = audio_hash
-                    
-                    # Check cache
-                    status_text.text("🔍 Checking cache...")
-                    progress_bar.progress(20)
-                    
-                    cached_results = get_cached_translations(audio_hash)
-                    
-                    if cached_results:
-                        status_text.text("⚡ Loading from cache...")
-                        progress_bar.progress(100)
-                        
-                        st.session_state.original_transcript = cached_results['tamil']
-                        st.session_state.tamil_transcript = cached_results['tamil']
-                        st.session_state.tanglish_transcript = cached_results['tanglish']
-                        st.session_state.english_transcript = cached_results['english']
-                        st.session_state.timestamps = cached_results.get('timestamps', [])
-                        st.session_state.original_translations = cached_results
-                        st.session_state.editing_mode = True
-                        
-                        st.success("✅ Loaded from cache instantly!")
+""", unsafe_allow_html=True)✅ Loaded from cache instantly!")
                         time.sleep(1)
                         st.rerun()
                     
@@ -1252,11 +1258,4 @@ st.markdown("""
                     status_text.text("✅ Processing complete!")
                     
                     time.sleep(1)
-                    st.success("🎉 File processed successfully!")
-                    st.rerun()
-
-                except Exception as e:
-                    st.error(f"❌ An error occurred during processing: {str(e)}")
-                    st.error("Please try again or contact support if the problem persists.")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+                    st.success("
