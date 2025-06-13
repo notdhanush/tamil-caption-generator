@@ -1259,4 +1259,4 @@ st.markdown("""
                     st.error(f"❌ An error occurred during processing: {str(e)}")
                     st.error("Please try again or contact support if the problem persists.")
     
-    st.markdown('</div>', unsafe_allow_html
+    st.markdown('</div>', unsafe_allow_html=True)
