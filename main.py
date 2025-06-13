@@ -1167,7 +1167,8 @@ st.markdown("""
 <div style="text-align: center; color: #6c757d; padding: 1rem;">
     <p>Made with ❤️ for the Tamil community | Powered by AI</p>
 </div>
-""", unsafe_allow_html=True)✅ Loaded from cache instantly!")
+""", unsafe_allow_html=True)
+                        st.success("✅ Loaded from cache instantly!")
                         time.sleep(1)
                         st.rerun()
                     
