@@ -11,13 +11,13 @@ import time
 
 # Page Configuration
 st.set_page_config(
-    page_title="Tamil Caption Generator",
+    page_title="Thanglish - Tamil Caption Generator",
     page_icon="🎬",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Professional Styling
+# Enhanced Professional Styling with Playful Colors
 st.markdown("""
 <style>
     /* Hide Streamlit elements */
@@ -27,210 +27,302 @@ st.markdown("""
     
     /* Main container */
     .main-container {
-        max-width: 800px;
+        max-width: 900px;
         margin: 0 auto;
         padding: 1rem;
     }
     
-    /* Header */
+    /* Header with playful gradient */
     .app-header {
         text-align: center;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #45B7D1 100%);
         color: white;
-        padding: 2rem;
-        border-radius: 16px;
+        padding: 2.5rem;
+        border-radius: 20px;
         margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .app-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(255,255,255,0.05) 10px,
+            rgba(255,255,255,0.05) 20px
+        );
+        animation: shine 3s linear infinite;
+    }
+    
+    @keyframes shine {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
     }
     
     .app-header h1 {
-        font-size: 2.2rem;
-        font-weight: 700;
+        font-size: 2.8rem;
+        font-weight: 800;
         margin-bottom: 0.5rem;
         letter-spacing: -0.02em;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 1;
     }
     
     .app-header p {
-        font-size: 1.1rem;
-        opacity: 0.9;
+        font-size: 1.2rem;
+        opacity: 0.95;
         margin: 0;
-        font-weight: 400;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
     }
     
-    /* Step indicator */
+    /* Step indicator with playful colors */
     .step-indicator {
         display: flex;
         justify-content: center;
         margin: 2rem 0;
         gap: 1rem;
+        flex-wrap: wrap;
     }
     
     .step {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 500;
+        padding: 0.7rem 1.2rem;
+        border-radius: 25px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     
     .step.active {
-        background: #2a5298;
+        background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
         color: white;
+        transform: scale(1.05);
     }
     
     .step.inactive {
-        background: #f0f2f6;
-        color: #6b7280;
+        background: #f8f9fa;
+        color: #6c757d;
     }
     
     .step.completed {
-        background: #10b981;
+        background: linear-gradient(135deg, #4ECDC4, #6ED3D0);
         color: white;
     }
     
-    /* Cards */
+    /* Cards with better spacing */
     .card {
         background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 16px;
+        padding: 2rem;
         margin-bottom: 1.5rem;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     }
     
     .card h3 {
-        margin: 0 0 1rem 0;
-        color: #1f2937;
-        font-size: 1.2rem;
-        font-weight: 600;
+        margin: 0 0 1.5rem 0;
+        color: #2d3748;
+        font-size: 1.4rem;
+        font-weight: 700;
     }
     
-    /* Buttons */
+    /* Enhanced buttons */
     .stButton>button {
-        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
         color: white;
         border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        padding: 0.8rem 1.8rem;
         font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(42,82,152,0.3);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255,107,107,0.4);
         width: auto;
-        min-width: 120px;
+        min-width: 140px;
     }
     
     .stButton>button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(42,82,152,0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(255,107,107,0.5);
+        background: linear-gradient(135deg, #FF5252 0%, #FF7979 100%);
     }
     
-    /* File uploader */
+    /* Secondary buttons */
+    .secondary-button button {
+        background: linear-gradient(135deg, #4ECDC4 0%, #6ED3D0 100%) !important;
+        box-shadow: 0 4px 15px rgba(78,205,196,0.4) !important;
+    }
+    
+    .secondary-button button:hover {
+        background: linear-gradient(135deg, #45B7D1 0%, #5DADE2 100%) !important;
+        box-shadow: 0 6px 25px rgba(69,183,209,0.5) !important;
+    }
+    
+    /* Tertiary buttons */
+    .tertiary-button button {
+        background: linear-gradient(135deg, #FFA726 0%, #FFB74D 100%) !important;
+        box-shadow: 0 4px 15px rgba(255,167,38,0.4) !important;
+    }
+    
+    /* Download button special styling */
+    .download-button button {
+        background: linear-gradient(135deg, #4ECDC4 0%, #45B7D1 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 20px rgba(78,205,196,0.4) !important;
+        font-size: 1.1rem !important;
+        padding: 1rem 2rem !important;
+        border-radius: 15px !important;
+    }
+    
+    .download-button button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 35px rgba(78,205,196,0.6) !important;
+    }
+    
+    /* Enhanced file uploader */
     .uploadedFile {
-        border: 2px dashed #d1d5db;
-        border-radius: 12px;
-        padding: 2rem;
+        border: 3px dashed #4ECDC4;
+        border-radius: 16px;
+        padding: 2.5rem;
         text-align: center;
-        background: #f9fafb;
-        transition: all 0.2s ease;
+        background: linear-gradient(135deg, #f8fdff 0%, #e8f8f5 100%);
+        transition: all 0.3s ease;
     }
     
     .uploadedFile:hover {
-        border-color: #2a5298;
-        background: #f0f4ff;
+        border-color: #FF6B6B;
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+        transform: scale(1.02);
     }
     
-    /* Info boxes */
+    /* Info boxes with playful colors */
     .info-box {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border: 1px solid #3b82f6;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, #e8f4fd 0%, #d6eaf8 100%);
+        border: 2px solid #45B7D1;
+        border-radius: 12px;
+        padding: 1.2rem;
         margin: 1rem 0;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 15px rgba(69,183,209,0.2);
     }
     
     .success-box {
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-        border: 1px solid #10b981;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, #e8f8f5 0%, #d5f4e6 100%);
+        border: 2px solid #4ECDC4;
+        border-radius: 12px;
+        padding: 1.2rem;
         margin: 1rem 0;
-        font-size: 0.9rem;
-        color: #065f46;
+        font-size: 0.95rem;
+        color: #2d5a4a;
+        box-shadow: 0 4px 15px rgba(78,205,196,0.2);
     }
     
     .warning-box {
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-        border: 1px solid #f59e0b;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
+        border: 2px solid #FFA726;
+        border-radius: 12px;
+        padding: 1.2rem;
         margin: 1rem 0;
-        font-size: 0.9rem;
-        color: #92400e;
+        font-size: 0.95rem;
+        color: #e65100;
+        box-shadow: 0 4px 15px rgba(255,167,38,0.2);
     }
     
-    /* Transcript editor */
-    .transcript-editor {
-        background: #ffffff;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        min-height: 300px;
-        font-family: 'Monaco', 'Menlo', monospace;
-        line-height: 1.6;
+    /* Line editor with better spacing */
+    .line-editor {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #fafbfc;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
     }
     
-    .transcript-editor:focus {
-        border-color: #2a5298;
-        box-shadow: 0 0 0 3px rgba(42,82,152,0.1);
+    .line-divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, #dee2e6, transparent);
+        margin: 0.5rem 0;
+    }
+    
+    /* Audio player styling */
+    .audio-player {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #dee2e6;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     
     /* Language tabs */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
+        gap: 8px;
         justify-content: center;
+        margin-bottom: 1rem;
     }
     
     .stTabs [data-baseweb="tab"] {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 500;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
     
     .stTabs [aria-selected="true"] {
-        background: #2a5298;
+        background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
         color: white;
-    }
-    
-    /* Audio player */
-    .audio-player {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 1rem 0;
+        box-shadow: 0 4px 15px rgba(255,107,107,0.3);
     }
     
     /* Export section */
     .export-section {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 12px;
-        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 16px;
+        padding: 2rem;
         margin-top: 2rem;
+        border: 2px solid #dee2e6;
     }
     
-    /* Green button for download */
-    .download-button button {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        color: white !important;
-        box-shadow: 0 2px 8px rgba(16,185,129,0.3) !important;
+    /* Stats cards */
+    .stats-container {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        flex-wrap: wrap;
     }
     
-    .download-button button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(16,185,129,0.4) !important;
+    .stat-card {
+        flex: 1;
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        border: 2px solid #e9ecef;
+        min-width: 120px;
+    }
+    
+    /* Expandable sections */
+    .expandable-section {
+        margin: 1.5rem 0;
     }
     
     /* Mobile responsive */
@@ -240,11 +332,11 @@ st.markdown("""
         }
         
         .app-header {
-            padding: 1.5rem;
+            padding: 2rem 1rem;
         }
         
         .app-header h1 {
-            font-size: 1.8rem;
+            font-size: 2.2rem;
         }
         
         .step-indicator {
@@ -253,8 +345,19 @@ st.markdown("""
         }
         
         .card {
-            padding: 1rem;
+            padding: 1.5rem;
         }
+        
+        .stats-container {
+            flex-direction: column;
+        }
+    }
+    
+    /* Navigation spacing */
+    .navigation-section {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #e9ecef;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -346,49 +449,60 @@ def process_video_to_audio(video_content):
 
 def generate_initial_translations(tamil_text):
     try:
+        # Enhanced prompt for better Tanglish accuracy
         tanglish_prompt = f"""
-        Convert this Tamil text to accurate Tanglish (Tamil written in phonetic English letters) following these rules:
+        Convert this Tamil text to highly accurate Thanglish (Tamil written in phonetic English letters) following these strict rules:
 
-        PHONETIC RULES:
-        - க = ka/ga, ச = cha/sa, ட = ta/da, த = tha, ப = pa/ba, ற = ra
-        - ங் = ng, ன் = n, ம் = m, ல் = l, ர் = r, ய் = y
+        CRITICAL PHONETIC RULES:
+        - க = ka/ga, ச = cha/sa, ட = ta/da, த = tha, ப = pa/ba, ற = ra/rra
+        - ங் = ng, ன் = n, ம் = m, ல் = l, ர் = r, ய் = y, ழ் = zh
         - ஆ = aa, ஈ = ee, ஊ = oo, ஏ = e, ஐ = ai, ஓ = o, ஔ = au
-        - Double consonants: க்க = kka, ச்ச = cha, ட்ட = tta, ப்ப = ppa
-        - Common words: என்ன = enna, அவன் = avan, இவன் = ivan, அது = adhu
-
-        EXAMPLES:
-        - நமக்கு = namaku (not "namakku")
-        - நிச்சயமான = nichchayamana (not "nichchayamaana")
-        - நாடுகள் = naadugal (not "naadukkitta")
-        - கிட்ட = kitta (not "kku")
+        - Double consonants: க்க = kka, ச்ச = chcha, ட்ட = tta, ப்ப = ppa
+        
+        WORD ACCURACY FIXES:
+        - மிசைல் = missile (keep English technical terms)
+        - சிஸ்டம் = system 
+        - மெசேஜ் = message
+        - டெக்னாலஜி = technology
+        - இன்ஜினியர் = engineer
+        - கம்ப்யூட்டர் = computer
+        
+        COMMON WORDS - USE THESE EXACT SPELLINGS:
+        - என்ன = enna, அவன் = avan, இவன் = ivan, அது = adhu, இது = idhu
+        - நமக்கு = namaku, எங்களுக்கு = engaluku, உங்களுக்கு = ungaluku
+        - பண்ணலாம் = pannalam, செய்யலாம் = seiyalam
+        - இருக்கு = iruku, வருகிறேன் = varukiren
+        - கிட்ட = kitta, கூட = kooda, மட்டும் = mattum
+        
+        EXAMPLES OF CORRECT CONVERSION:
+        - நிச்சயமான = nichchayamana 
+        - நாடுகள் = naadugal
         - தொழில்நுட்பம் = thozhilnutpam
-        - சிஸ்டம் = system
-        - மிசைல் = missile
-
-        Make it sound natural like how Tamil speakers actually write in English.
-        Keep English words as they are (technology, system, missile, etc.).
-
+        - பொறுப்பு = poruppu
+        - நிறுவனம் = niruvanam
+        
         Text: "{tamil_text}"
 
-        Return only the accurate Tanglish translation, nothing else.
+        Return ONLY the accurate Thanglish translation with proper phonetic spelling.
         """
         
         tanglish_response = generative_model.generate_content(tanglish_prompt)
         tanglish_text = tanglish_response.text.strip()
         
         english_prompt = f"""
-        Translate this Tamil text to natural, contextually accurate English.
+        Translate this Tamil text to natural, contextually accurate English with perfect grammar.
 
         TRANSLATION GUIDELINES:
-        - Preserve the original meaning and tone
-        - Use natural English expressions, not word-for-word translation
-        - Maintain any technical terms appropriately
-        - Keep the conversational flow if it's spoken content
+        - Preserve the original meaning and conversational tone
+        - Use natural English expressions, not literal translations
+        - Maintain technical terms appropriately 
+        - Keep the conversational flow for spoken content
         - For Tamil cultural references, use equivalent English expressions
+        - Ensure grammatical correctness and natural sentence structure
 
         Text: "{tamil_text}"
 
-        Return only the natural English translation, nothing else.
+        Return ONLY the natural English translation with proper grammar.
         """
         
         english_response = generative_model.generate_content(english_prompt)
@@ -465,8 +579,8 @@ st.markdown('<div class="main-container">', unsafe_allow_html=True)
 # Header
 st.markdown("""
 <div class="app-header">
-    <h1>🎬 Tamil Caption Generator</h1>
-    <p>Professional audio & video transcription with perfect Tanglish output</p>
+    <h1>🎬 Thanglish</h1>
+    <p>Professional Tamil Caption Generator - Audio & Video to Perfect Thanglish/Tamil/English</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -517,6 +631,28 @@ if st.session_state.current_step == 1:
         📊 <strong>File limit:</strong> 200MB | ⏱️ <strong>Duration:</strong> Up to 60 minutes
     </div>
     """, unsafe_allow_html=True)
+    
+    # Pro Tips Dropdown
+    with st.expander("🎯 Pro Tips for Better Accuracy", expanded=False):
+        st.markdown("""
+        **🔊 Audio Quality Tips:**
+        - Use clear, high-quality audio (avoid background noise)
+        - Speak clearly and at normal pace (not too fast)
+        - Use a good microphone if possible
+        - Avoid echo or reverb
+        
+        **🎤 Recording Best Practices:**
+        - Record in a quiet environment
+        - Keep consistent volume levels
+        - Pause between sentences for better processing
+        - Tamil + English mixed content works great!
+        
+        **📹 Video Tips:**
+        - Good audio quality matters more than video quality
+        - Built-in phone mics work fine for clear speech
+        - Avoid windy outdoor recordings
+        - Indoor recordings usually work better
+        """)
     
     uploaded_file = st.file_uploader(
         "Drop your file here or click to browse",
@@ -772,14 +908,43 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
     
     st.markdown("""
     <div class="info-box">
-        💡 <strong>Pro Tip:</strong> Edit in Tanglish for best results. Use 'Smart Sync' for quick updates or 'AI Re-translate' for accuracy.
+        💡 <strong>Pro Tip:</strong> Edit in Thanglish for best results. Use 'Smart Sync' for quick updates or 'AI Re-translate' for accuracy.
     </div>
     """, unsafe_allow_html=True)
     
-    # Editing tools
+    # Editing guide dropdown
+    with st.expander("📚 Editing Guide & Tips", expanded=False):
+        st.markdown("""
+        **🎯 Editing Best Practices:**
+        
+        **For Thanglish Accuracy:**
+        - Use phonetic English spelling for Tamil words
+        - Keep technical terms in English (system, technology, etc.)
+        - Example: "நமக்கு" → "namaku" (not "namakku")
+        - Example: "மிசைல்" → "missile" (keep as English)
+        
+        **Common Thanglish Patterns:**
+        - "என்ன" → "enna", "எப்படி" → "eppadi"
+        - "பண்ணலாம்" → "pannalam", "செய்யலாம்" → "seiyalam"
+        - "இருக்கு" → "iruku", "வருகிறேன்" → "varukiren"
+        
+        **Editing Tools Explained:**
+        - **Smart Sync**: Quick local sync between languages
+        - **AI Re-translate**: Full AI-powered translation for major edits
+        - **Reset Original**: Restore to initial transcription
+        
+        **Pro Tips:**
+        - Edit line by line for better control
+        - Use proper punctuation for SRT exports
+        - Check the preview tabs to see all language versions
+        """)
+    
+    # Editing tools with better spacing
+    st.markdown("#### 🛠️ Editing Tools")
     col1, col2, col3 = st.columns(3)
     
     with col1:
+        st.markdown('<div class="secondary-button">', unsafe_allow_html=True)
         if st.button("🔄 Smart Sync", help="Sync other languages with your edits locally", use_container_width=True):
             with st.spinner("🔄 Syncing languages..."):
                 synced_result, change_type = smart_text_sync(
@@ -794,6 +959,7 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
                 else:
                     st.session_state.save_message = "⚠️ Major changes detected. Use 'AI Re-translate' for better accuracy."
                 st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         if st.button("🤖 AI Re-translate", help="Use AI to re-translate all languages", use_container_width=True):
@@ -809,6 +975,7 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
                     st.error(f"❌ Re-translation failed: {e}")
     
     with col3:
+        st.markdown('<div class="tertiary-button">', unsafe_allow_html=True)
         if st.button("↩️ Reset Original", help="Reset to original transcription", use_container_width=True):
             if st.session_state.original_translations:
                 st.session_state.tanglish_transcript = st.session_state.original_translations['tanglish']
@@ -816,9 +983,11 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
                 st.session_state.english_transcript = st.session_state.original_translations['english']
                 st.session_state.save_message = "↩️ Reset to original!"
                 st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Line-by-line transcript editor
+    # Line-by-line transcript editor with better spacing
     st.markdown("#### 📝 Line-by-Line Editor")
+    st.markdown('<div class="line-editor">', unsafe_allow_html=True)
     
     # Convert to line-by-line format
     lines = st.session_state.tanglish_transcript.split('.')
@@ -834,9 +1003,11 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
         )
         edited_lines.append(edited_line)
         
-        # Simple line divider
+        # Improved line divider
         if i < len(lines) - 1:
-            st.markdown("---")
+            st.markdown('<div class="line-divider"></div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Update transcript from lines
     new_transcript = '. '.join(edited_lines)
@@ -844,11 +1015,12 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
         st.session_state.tanglish_transcript = new_transcript
         st.session_state.save_message = ""
     
-    # Stats
+    # Stats with better styling
     word_count = len(new_transcript.split()) if new_transcript else 0
     char_count = len(new_transcript) if new_transcript else 0
     estimated_duration = word_count / 150 if word_count > 0 else 0
     
+    st.markdown("#### 📊 Statistics")
     col_stat1, col_stat2, col_stat3 = st.columns(3)
     with col_stat1:
         st.metric("📊 Words", word_count)
@@ -857,13 +1029,13 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
     with col_stat3:
         st.metric("⏱️ Duration", f"{estimated_duration:.1f} min")
     
-    # Language preview tabs
+    # Language preview tabs with better spacing
     st.markdown("#### 📖 Language Previews")
-    tab1, tab2, tab3 = st.tabs(["🔤 Tanglish", "🕉️ Tamil", "🌍 English"])
+    tab1, tab2, tab3 = st.tabs(["🔤 Thanglish", "🕉️ Tamil", "🌍 English"])
     
     with tab1:
         st.text_area(
-            "Tanglish Preview:", 
+            "Thanglish Preview:", 
             value=st.session_state.tanglish_transcript, 
             height=150, 
             disabled=True,
@@ -888,7 +1060,8 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
             key="english_preview"
         )
     
-    # Navigation
+    # Navigation with better spacing
+    st.markdown('<div class="navigation-section">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col1:
         if st.button("← Back to Process"):
@@ -898,6 +1071,7 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
         if st.button("Continue to Export →"):
             st.session_state.current_step = 4
             st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -912,13 +1086,34 @@ elif st.session_state.current_step == 4:
     </div>
     """, unsafe_allow_html=True)
     
+    # Export guide dropdown
+    with st.expander("📖 Export Format Guide", expanded=False):
+        st.markdown("""
+        **📄 Text Format (TXT):**
+        - Clean text for documents and scripts
+        - Perfect for sharing transcripts
+        - Easy to copy-paste into other applications
+        
+        **🎬 Subtitle Format (SRT):**
+        - Professional video subtitles
+        - Works with Premiere Pro, Final Cut, DaVinci Resolve
+        - Compatible with YouTube, Vimeo, and other platforms
+        - Includes timing information for video sync
+        
+        **💡 Pro Tips:**
+        - Use 42 characters max for readable subtitles
+        - Single line works best for mobile viewing
+        - Double line for desktop/TV viewing
+        - Minimum 3 seconds ensures readability
+        """)
+    
     # Export options in columns
     col1, col2 = st.columns(2)
     
     with col1:
         export_language = st.selectbox(
             "🌍 Language",
-            ["Tanglish", "Tamil", "English"],
+            ["Thanglish", "Tamil", "English"],
             help="Choose which language version to download"
         )
         
@@ -955,7 +1150,7 @@ elif st.session_state.current_step == 4:
     st.markdown("#### 👁️ Export Preview")
     
     # Get export text
-    if export_language == "Tanglish":
+    if export_language == "Thanglish":
         export_text = st.session_state.tanglish_transcript
     elif export_language == "Tamil":
         export_text = st.session_state.tamil_transcript
@@ -1017,15 +1212,21 @@ elif st.session_state.current_step == 4:
         preview_text = export_text[:300] + "..." if len(export_text) > 300 else export_text
         st.text_area("Preview:", value=preview_text, height=150, disabled=True)
     
-    # Download section
-    st.markdown("#### 📥 Download")
+    # Enhanced download section
+    st.markdown("#### 📥 Download Your Captions")
     
-    col1, col2 = st.columns([1, 2])
+    # Initialize download state
+    if 'download_ready' not in st.session_state:
+        st.session_state.download_ready = False
+        st.session_state.download_data = ""
+        st.session_state.download_filename = ""
     
-    with col2:
-        # Right side - Download buttons
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        # Generate button
         st.markdown('<div class="download-button">', unsafe_allow_html=True)
-        if st.button("📥 Generate & Download", type="primary", use_container_width=True):
+        if st.button("🔄 Generate File", type="primary", use_container_width=True):
             with st.spinner(f"🔄 Preparing {export_language} {export_format} file..."):
                 try:
                     if export_format == "TXT":
@@ -1080,30 +1281,52 @@ elif st.session_state.current_step == 4:
                         mime_type = "text/plain"
                         file_extension = "srt"
                     
-                    filename = f"transcript_{export_language.lower()}.{file_extension}"
+                    filename = f"thanglish_captions_{export_language.lower()}.{file_extension}"
                     
-                    st.download_button(
-                        label=f"📥 Download {export_language} {export_format}",
-                        data=file_data,
-                        file_name=filename,
-                        mime=mime_type,
-                        use_container_width=True,
-                        key="download_btn"
-                    )
+                    # Store in session state
+                    st.session_state.download_ready = True
+                    st.session_state.download_data = file_data
+                    st.session_state.download_filename = filename
+                    st.session_state.download_mime = mime_type
                     
                     st.markdown(f"""
                     <div class="success-box">
-                        ✅ <strong>Ready for download!</strong><br>
-                        📁 File: {filename} | 📊 Size: {len(file_data.encode('utf-8')) / 1024:.1f} KB
+                        ✅ <strong>File generated successfully!</strong><br>
+                        📁 File: {filename} | 📊 Size: {len(file_data.encode('utf-8')) / 1024:.1f} KB<br>
+                        💡 Click "Download" to save your captions!
                     </div>
                     """, unsafe_allow_html=True)
                     
                 except Exception as e:
-                    st.error(f"❌ Export failed: {e}")
+                    st.error(f"❌ Generation failed: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        # New File button below
-        if st.button("🔄 New File", help="Process another file", use_container_width=True):
+    
+    with col2:
+        # Download button (only appears after generation)
+        if st.session_state.download_ready:
+            st.download_button(
+                label=f"📥 Download {export_language} {export_format}",
+                data=st.session_state.download_data,
+                file_name=st.session_state.download_filename,
+                mime=st.session_state.download_mime,
+                use_container_width=True,
+                type="primary"
+            )
+        else:
+            st.markdown("""
+            <div style="padding: 0.8rem; text-align: center; color: #6c757d; 
+                        border: 2px dashed #dee2e6; border-radius: 12px;">
+                📝 Generate file first to download
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Additional actions
+    st.markdown("#### 🔄 Next Steps")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown('<div class="secondary-button">', unsafe_allow_html=True)
+        if st.button("🔄 Process New File", help="Upload and process another file", use_container_width=True):
             # Reset all session state
             for var in session_vars:
                 if var == 'current_step':
@@ -1114,14 +1337,25 @@ elif st.session_state.current_step == 4:
                     st.session_state[var] = {}
                 else:
                     st.session_state[var] = ""
+            # Reset download state
+            st.session_state.download_ready = False
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div class="tertiary-button">', unsafe_allow_html=True)
+        if st.button("📝 Try Different Format", help="Export in different format/language", use_container_width=True):
+            st.session_state.download_ready = False
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Navigation
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("← Back to Edit"):
-            st.session_state.current_step = 3
-            st.rerun()
+    st.markdown('<div class="navigation-section">', unsafe_allow_html=True)
+    if st.button("← Back to Edit"):
+        st.session_state.current_step = 3
+        st.session_state.download_ready = False
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1132,9 +1366,13 @@ else:
 
 # Footer
 st.markdown("""
-<div style="text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #e5e7eb;">
-    <p style="color: #6b7280; margin: 0;">
-        Made with ❤️ for the Tamil community | Professional AI-powered transcription
+<div style="text-align: center; padding: 2rem; margin-top: 3rem; border-top: 2px solid #e9ecef; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+    <p style="color: #6c757d; margin: 0; font-size: 1rem; font-weight: 500;">
+        Made with ❤️ for Tamil creators | Thanglish - Professional AI-powered transcription
+    </p>
+    <p style="color: #adb5bd; margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+        Tamil + English = Thanglish மேட்டர் 🚀
     </p>
 </div>
 """, unsafe_allow_html=True)
