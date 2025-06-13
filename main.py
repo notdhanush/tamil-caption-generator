@@ -1168,7 +1168,7 @@ st.markdown("""
     <p>Made with ❤️ for the Tamil community | Powered by AI</p>
 </div>
 """, unsafe_allow_html=True)
-                        st.success("✅ Loaded from cache instantly!")
+st.success("✅ Loaded from cache instantly!")
                         time.sleep(1)
                         st.rerun()
                     
