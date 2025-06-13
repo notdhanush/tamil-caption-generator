@@ -1169,8 +1169,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 st.success("✅ Loaded from cache instantly!")
-                        time.sleep(1)
-                        st.rerun()
+time.sleep(1)
+st.rerun()
                     
                     # Process file
                     if is_video:
