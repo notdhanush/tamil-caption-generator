@@ -221,12 +221,16 @@ st.markdown("""
         margin-top: 2rem;
     }
     
-    /* Help tooltip */
-    .help-tooltip {
-        display: inline-block;
-        margin-left: 8px;
-        color: #6b7280;
-        cursor: help;
+    /* Green button for download */
+    .download-button button {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(16,185,129,0.3) !important;
+    }
+    
+    .download-button button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(16,185,129,0.4) !important;
     }
     
     /* Mobile responsive */
@@ -582,6 +586,8 @@ if st.session_state.current_step == 1:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             if st.button("🚀 Start Processing", type="primary", use_container_width=True):
+                # Store file content in session state
+                st.session_state.uploaded_file_content = uploaded_file.getvalue()
                 st.session_state.current_step = 2
                 st.rerun()
     
@@ -592,7 +598,7 @@ elif st.session_state.current_step == 2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🔄 Processing Your File")
     
-    # Processing logic
+    # Auto-start processing
     progress_container = st.container()
     status_container = st.container()
     
@@ -601,6 +607,14 @@ elif st.session_state.current_step == 2:
     
     with status_container:
         status_text = st.empty()
+    
+    # Auto-process without asking for file upload again
+    if not hasattr(st.session_state, 'uploaded_file_content'):
+        st.error("❌ No file found. Please go back and upload a file.")
+        if st.button("← Back to Upload"):
+            st.session_state.current_step = 1
+            st.rerun()
+        st.stop()
     
     try:
         # Reset states
@@ -611,22 +625,7 @@ elif st.session_state.current_step == 2:
         progress_bar.progress(10)
         time.sleep(0.5)
         
-        # Get uploaded file from session or reupload
-        uploaded_file = st.file_uploader(
-            "File",
-            type=["mp3", "wav", "m4a", "ogg", "flac", "mp4", "mov", "avi", "mkv"],
-            label_visibility="collapsed",
-            key="processing_uploader"
-        )
-        
-        if not uploaded_file:
-            st.warning("Please upload a file first!")
-            if st.button("← Back to Upload"):
-                st.session_state.current_step = 1
-                st.rerun()
-            st.stop()
-        
-        audio_content = uploaded_file.getvalue()
+        audio_content = st.session_state.uploaded_file_content
         audio_hash = get_audio_hash(audio_content)
         st.session_state.audio_hash = audio_hash
         
@@ -654,7 +653,7 @@ elif st.session_state.current_step == 2:
             st.rerun()
         
         # Process file
-        file_extension = uploaded_file.name.lower().split('.')[-1]
+        file_extension = st.session_state.file_type
         is_video = file_extension in ['mp4', 'mov', 'avi', 'mkv']
         
         if is_video:
@@ -827,17 +826,17 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
     
     edited_lines = []
     for i, line in enumerate(lines):
-        col_line, col_help = st.columns([10, 1])
-        with col_line:
-            edited_line = st.text_input(
-                f"Line {i+1}",
-                value=line,
-                key=f"line_{i}",
-                label_visibility="collapsed"
-            )
-            edited_lines.append(edited_line)
-        with col_help:
-            st.markdown(f'<span class="help-tooltip" title="Edit this line">❓</span>', unsafe_allow_html=True)
+        edited_line = st.text_input(
+            f"Line {i+1}",
+            value=line,
+            key=f"line_{i}",
+            label_visibility="collapsed"
+        )
+        edited_lines.append(edited_line)
+        
+        # Simple line divider
+        if i < len(lines) - 1:
+            st.markdown("---")
     
     # Update transcript from lines
     new_transcript = '. '.join(edited_lines)
@@ -1021,9 +1020,11 @@ elif st.session_state.current_step == 4:
     # Download section
     st.markdown("#### 📥 Download")
     
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([1, 2])
     
-    with col1:
+    with col2:
+        # Right side - Download buttons
+        st.markdown('<div class="download-button">', unsafe_allow_html=True)
         if st.button("📥 Generate & Download", type="primary", use_container_width=True):
             with st.spinner(f"🔄 Preparing {export_language} {export_format} file..."):
                 try:
@@ -1099,8 +1100,9 @@ elif st.session_state.current_step == 4:
                     
                 except Exception as e:
                     st.error(f"❌ Export failed: {e}")
-    
-    with col2:
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # New File button below
         if st.button("🔄 New File", help="Process another file", use_container_width=True):
             # Reset all session state
             for var in session_vars:
