@@ -11,143 +11,251 @@ import time
 
 # Page Configuration
 st.set_page_config(
-    page_title="Tamil Caption Generator Pro",
+    page_title="Tamil Caption Generator",
     page_icon="🎬",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Styling
+# Professional Styling
 st.markdown("""
 <style>
+    /* Hide Streamlit elements */
     .css-1d391kg {display: none}
-    section[data-testid="stSidebar"] {
-        display: none;
+    section[data-testid="stSidebar"] {display: none}
+    .css-k1vhr4 {padding: 1rem 2rem}
+    
+    /* Main container */
+    .main-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1rem;
     }
     
-    .main-header {
+    /* Header */
+    .app-header {
         text-align: center;
-        padding: 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
-        border-radius: 15px;
+        padding: 2rem;
+        border-radius: 16px;
         margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     }
     
-    .main-header h1 {
-        font-size: 2.5rem;
+    .app-header h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
         margin-bottom: 0.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        letter-spacing: -0.02em;
     }
     
-    .main-header p {
-        font-size: 1.2rem;
+    .app-header p {
+        font-size: 1.1rem;
         opacity: 0.9;
         margin: 0;
+        font-weight: 400;
     }
     
-    .upload-card, .edit-card {
+    /* Step indicator */
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+        gap: 1rem;
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .step.active {
+        background: #2a5298;
+        color: white;
+    }
+    
+    .step.inactive {
+        background: #f0f2f6;
+        color: #6b7280;
+    }
+    
+    .step.completed {
+        background: #10b981;
+        color: white;
+    }
+    
+    /* Cards */
+    .card {
         background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        border: 1px solid #e0e0e0;
-        margin-bottom: 2rem;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     
+    .card h3 {
+        margin: 0 0 1rem 0;
+        color: #1f2937;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    /* Buttons */
     .stButton>button {
-        width: 100%;
-        background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
         color: white;
         border: none;
+        border-radius: 8px;
         padding: 0.75rem 1.5rem;
-        border-radius: 10px;
         font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(42,82,152,0.3);
+        width: auto;
+        min-width: 120px;
     }
     
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(42,82,152,0.4);
     }
     
-    .info-box {
-        padding: 1rem;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border: 1px solid #2196f3;
-        color: #0277bd;
-        margin: 1rem 0;
-        font-size: 0.95em;
-        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
-    }
-    
-    .edit-info {
-        padding: 1rem;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-        border: 1px solid #9c27b0;
-        color: #7b1fa2;
-        margin: 1rem 0;
-        font-size: 0.95em;
-        box-shadow: 0 2px 8px rgba(156, 39, 176, 0.1);
-    }
-    
-    .save-success {
-        padding: 1rem;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        border: 1px solid #28a745;
-        color: #155724;
-        margin: 1rem 0;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
-    }
-    
-    .error-box {
-        padding: 1rem;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        border: 1px solid #dc3545;
-        color: #721c24;
-        margin: 1rem 0;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
-    }
-    
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
-        margin: 2rem 0;
-    }
-    
-    .feature-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    /* File uploader */
+    .uploadedFile {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
         text-align: center;
-        border: 1px solid #e0e0e0;
-        transition: transform 0.3s ease;
+        background: #f9fafb;
+        transition: all 0.2s ease;
     }
     
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    .uploadedFile:hover {
+        border-color: #2a5298;
+        background: #f0f4ff;
     }
     
-    .feature-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
+    /* Info boxes */
+    .info-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+    }
+    
+    .success-box {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+        color: #065f46;
+    }
+    
+    .warning-box {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+        color: #92400e;
+    }
+    
+    /* Transcript editor */
+    .transcript-editor {
+        background: #ffffff;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        min-height: 300px;
+        font-family: 'Monaco', 'Menlo', monospace;
+        line-height: 1.6;
+    }
+    
+    .transcript-editor:focus {
+        border-color: #2a5298;
+        box-shadow: 0 0 0 3px rgba(42,82,152,0.1);
+    }
+    
+    /* Language tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+        justify-content: center;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: #2a5298;
+        color: white;
+    }
+    
+    /* Audio player */
+    .audio-player {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    /* Export section */
+    .export-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    /* Help tooltip */
+    .help-tooltip {
+        display: inline-block;
+        margin-left: 8px;
+        color: #6b7280;
+        cursor: help;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .main-container {
+            padding: 0.5rem;
+        }
+        
+        .app-header {
+            padding: 1.5rem;
+        }
+        
+        .app-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .step-indicator {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .card {
+            padding: 1rem;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Authentication
+# Authentication and helper functions
 def load_credentials():
     try:
         if "google_credentials_json" in st.secrets:
@@ -195,7 +303,7 @@ def load_credentials():
             return credentials, "Success"
             
         else:
-            return None, "No Google Cloud credentials found in secrets"
+            return None, "No credentials found in secrets"
             
     except json.JSONDecodeError as e:
         return None, f"JSON parsing error: {str(e)}"
@@ -204,7 +312,6 @@ def load_credentials():
     except Exception as e:
         return None, f"Unexpected error loading credentials: {str(e)}"
 
-# Caching System
 def get_audio_hash(audio_content):
     return hashlib.md5(audio_content).hexdigest()
 
@@ -223,7 +330,6 @@ def get_cached_translations(audio_hash):
             return cached_data['results']
     return None
 
-# Video Processing Function
 def process_video_to_audio(video_content):
     try:
         video_segment = AudioSegment.from_file(io.BytesIO(video_content))
@@ -234,7 +340,6 @@ def process_video_to_audio(video_content):
     except Exception as e:
         return None, False
 
-# Translation Functions
 def generate_initial_translations(tamil_text):
     try:
         tanglish_prompt = f"""
@@ -297,27 +402,10 @@ def generate_initial_translations(tamil_text):
             'english': f"Translation Error: {e}"
         }
 
-# Local Text Processing Functions
-def local_text_corrections(text):
-    corrections = {
-        'anna': 'அண்ணா',
-        'amma': 'அம்மா',
-        'appa': 'அப்பா',
-        'akka': 'அக்கா',
-        'thambi': 'தம்பி',
-        'thangachi': 'தங்கச்சி',
-        'message': 'missile',
-        'system': 'system',
-        'technology': 'technology',
-    }
-    
-    corrected_text = text
-    for error, correction in corrections.items():
-        corrected_text = corrected_text.replace(error, correction)
-    
-    return corrected_text
-
 def smart_text_sync(edited_tanglish, original_translations):
+    if not original_translations:
+        return None, "no_original"
+    
     original_words = original_translations['tanglish'].split()
     edited_words = edited_tanglish.split()
     
@@ -351,95 +439,99 @@ if auth_success:
 
 # Initialize Session State
 session_vars = [
-    'audio_hash', 'original_transcript', 'tanglish_transcript', 'tamil_transcript',
-    'english_transcript', 'timestamps', 'processing_translations', 'editing_mode',
-    'save_message', 'original_translations', 'file_type'
+    'current_step', 'audio_hash', 'original_transcript', 'tanglish_transcript', 
+    'tamil_transcript', 'english_transcript', 'timestamps', 'editing_mode',
+    'save_message', 'original_translations', 'file_type', 'audio_content'
 ]
 
 for var in session_vars:
     if var not in st.session_state:
-        if var in ['processing_translations', 'editing_mode']:
+        if var == 'current_step':
+            st.session_state[var] = 1
+        elif var == 'editing_mode':
             st.session_state[var] = False
         elif var in ['timestamps', 'original_translations']:
             st.session_state[var] = {}
         else:
             st.session_state[var] = ""
 
-# Main App UI
+# Main App
+st.markdown('<div class="main-container">', unsafe_allow_html=True)
+
+# Header
 st.markdown("""
-<div class="main-header">
-    <h1>🎬 Tamil Caption Generator Pro</h1>
-    <p>Upload Audio/Video → Get Perfect Captions → Edit Unlimited → Download in Any Language</p>
+<div class="app-header">
+    <h1>🎬 Tamil Caption Generator</h1>
+    <p>Professional audio & video transcription with perfect Tanglish output</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Features Overview
-st.markdown("""
-<div class="feature-grid">
-    <div class="feature-card">
-        <div class="feature-icon">🎤</div>
-        <h3>Audio Support</h3>
-        <p>WAV, MP3, FLAC, M4A, OGG</p>
+# Step Indicator
+def get_step_class(step_num):
+    current = st.session_state.current_step
+    if step_num < current:
+        return "completed"
+    elif step_num == current:
+        return "active"
+    else:
+        return "inactive"
+
+st.markdown(f"""
+<div class="step-indicator">
+    <div class="step {get_step_class(1)}">
+        <span>1</span> Upload
     </div>
-    <div class="feature-card">
-        <div class="feature-icon">🎥</div>
-        <h3>Video Support</h3>
-        <p>MP4, AVI, MOV, MKV</p>
+    <div class="step {get_step_class(2)}">
+        <span>2</span> Process
     </div>
-    <div class="feature-card">
-        <div class="feature-icon">🗣️</div>
-        <h3>Multi-Language</h3>
-        <p>Tamil, Tanglish, English</p>
+    <div class="step {get_step_class(3)}">
+        <span>3</span> Edit
     </div>
-    <div class="feature-card">
-        <div class="feature-icon">✏️</div>
-        <h3>Unlimited Editing</h3>
-        <p>Edit as much as you want</p>
+    <div class="step {get_step_class(4)}">
+        <span>4</span> Export
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 if not auth_success:
     st.markdown(f"""
-    <div class="error-box">
-        ⚠️ Service is currently unavailable: {auth_message}
-        <br>Please try again later or contact support.
+    <div class="warning-box">
+        ⚠️ Service temporarily unavailable: {auth_message}<br>
+        Please try again later or contact support.
     </div>
     """, unsafe_allow_html=True)
     st.stop()
 
-col1, col2 = st.columns([1, 1], gap="large")
-
-with col1:
-    st.markdown('<div class="upload-card">', unsafe_allow_html=True)
-    st.markdown("## 📤 Upload & Transcribe")
+# STEP 1: Upload
+if st.session_state.current_step == 1:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### 📁 Upload Your File")
+    
+    st.markdown("""
+    <div class="info-box">
+        💡 <strong>Supported formats:</strong> Audio (MP3, WAV, M4A) and Video (MP4, MOV, AVI)<br>
+        📊 <strong>File limit:</strong> 200MB | ⏱️ <strong>Duration:</strong> Up to 60 minutes
+    </div>
+    """, unsafe_allow_html=True)
     
     uploaded_file = st.file_uploader(
-        "Choose your audio or video file",
-        type=["wav", "mp3", "flac", "m4a", "ogg", "mp4", "avi", "mov", "mkv"],
-        help="Supports audio formats (WAV, MP3, FLAC, M4A, OGG) and video formats (MP4, AVI, MOV, MKV) - Max: 200MB"
+        "Drop your file here or click to browse",
+        type=["mp3", "wav", "m4a", "ogg", "flac", "mp4", "mov", "avi", "mkv"],
+        help="Upload audio or video files for transcription",
+        label_visibility="collapsed"
     )
-
+    
     if uploaded_file:
         file_extension = uploaded_file.name.lower().split('.')[-1]
         st.session_state.file_type = file_extension
-        is_video = file_extension in ['mp4', 'avi', 'mov', 'mkv']
+        is_video = file_extension in ['mp4', 'mov', 'avi', 'mkv']
         
-        if is_video:
-            st.markdown("""
-            <div class="info-box">
-                🎥 <strong>Video File Detected!</strong><br>
-                We'll extract the audio automatically for processing.
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.audio(uploaded_file)
+        # File info
+        file_size = len(uploaded_file.getvalue()) / (1024 * 1024)
         
         try:
             if is_video:
-                file_size_mb = len(uploaded_file.getvalue()) / (1024 * 1024)
-                estimated_duration = file_size_mb / 2
-                duration_text = f"~{estimated_duration:.1f} minutes (estimated)"
+                duration_text = f"~{file_size / 2:.1f} minutes (estimated)"
             else:
                 audio_segment = AudioSegment.from_file(uploaded_file)
                 duration_minutes = len(audio_segment) / (1000 * 60)
@@ -448,515 +540,601 @@ with col1:
             duration_text = "Duration calculation unavailable"
         
         st.markdown(f"""
-        <div class="info-box">
-            📊 <strong>File Info:</strong> {uploaded_file.name}<br>
-            ⏱️ <strong>Duration:</strong> {duration_text}<br>
-            🎯 <strong>Output:</strong> Tamil + Tanglish + English + Unlimited Editing
+        <div class="success-box">
+            ✅ <strong>File uploaded:</strong> {uploaded_file.name}<br>
+            📁 <strong>Size:</strong> {file_size:.1f} MB | ⏱️ <strong>Duration:</strong> {duration_text}<br>
+            🎯 <strong>Type:</strong> {'Video' if is_video else 'Audio'} file
         </div>
         """, unsafe_allow_html=True)
         
-        with st.expander("🗣️ Advanced Language Settings", expanded=False):
-            col_lang1, col_lang2 = st.columns(2)
-            with col_lang1:
+        # Audio/Video preview
+        if is_video:
+            st.markdown("""
+            <div class="info-box">
+                🎥 Video detected! We'll extract high-quality audio for processing.
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="audio-player">', unsafe_allow_html=True)
+            st.audio(uploaded_file)
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Language settings
+        with st.expander("⚙️ Advanced Settings (Optional)", expanded=False):
+            col1, col2 = st.columns(2)
+            with col1:
                 primary_language = st.selectbox(
                     "Primary Language",
                     ["ta-IN", "en-IN", "hi-IN"],
-                    help="Main language in the audio/video"
+                    help="Main language in your audio/video"
                 )
-            with col_lang2:
+            with col2:
                 secondary_language = st.selectbox(
-                    "Secondary Language",
+                    "Secondary Language", 
                     ["en-IN", "ta-IN", "hi-IN"],
-                    help="Fallback language for mixed content"
+                    help="Fallback for mixed content"
                 )
             
-            enable_punctuation = st.checkbox("Enable Auto Punctuation", value=True)
-            enable_word_timestamps = st.checkbox("Enable Word Timestamps", value=True)
+            enable_punctuation = st.checkbox("Auto Punctuation", value=True)
+            enable_word_timestamps = st.checkbox("Word Timestamps", value=True)
         
-        if st.button("🧠 Process File", type="primary", use_container_width=True):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            with st.spinner("Processing your file..."):
-                try:
-                    st.session_state.editing_mode = False
-                    st.session_state.save_message = ""
-                    
-                    status_text.text("📁 Reading file...")
-                    progress_bar.progress(10)
-                    
-                    audio_content = uploaded_file.getvalue()
-                    audio_hash = get_audio_hash(audio_content)
-                    st.session_state.audio_hash = audio_hash
-                    
-                    status_text.text("🔍 Checking cache...")
-                    progress_bar.progress(20)
-                    
-                    cached_results = get_cached_translations(audio_hash)
-                    
-                    if cached_results:
-                        status_text.text("⚡ Loading from cache...")
-                        progress_bar.progress(100)
-                        
-                        st.session_state.original_transcript = cached_results['tamil']
-                        st.session_state.tamil_transcript = cached_results['tamil']
-                        st.session_state.tanglish_transcript = cached_results['tanglish']
-                        st.session_state.english_transcript = cached_results['english']
-                        st.session_state.timestamps = cached_results.get('timestamps', [])
-                        st.session_state.original_translations = cached_results
-                        st.session_state.editing_mode = True
-                        
-                        st.success("✅ Loaded from cache instantly!")
-                        time.sleep(1)
-                        st.rerun()
-                    
-                    if is_video:
-                        status_text.text("🎥 Extracting audio from video...")
-                        progress_bar.progress(30)
-                        
-                        processed_audio, success = process_video_to_audio(audio_content)
-                        if not success:
-                            st.error("❌ Failed to extract audio from video. Please try with a different file format.")
-                            st.stop()
-                        content = processed_audio
-                    else:
-                        status_text.text("🎵 Processing audio...")
-                        progress_bar.progress(30)
-                        
-                        audio_segment = AudioSegment.from_file(io.BytesIO(audio_content))
-                        audio_segment = audio_segment.set_frame_rate(16000).set_channels(1)
-
-                        buffer = io.BytesIO()
-                        audio_segment.export(buffer, format="flac")
-                        content = buffer.getvalue()
-                    
-                    status_text.text("🗣️ Converting speech to text...")
-                    progress_bar.progress(50)
-                    
-                    recognition_audio = speech.RecognitionAudio(content=content)
-                    config = speech.RecognitionConfig(
-                        encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
-                        sample_rate_hertz=16000,
-                        language_code=primary_language,
-                        alternative_language_codes=[secondary_language],
-                        enable_automatic_punctuation=enable_punctuation,
-                        enable_word_time_offsets=enable_word_timestamps,
-                        model="latest_long"
-                    )
-
-                    response = speech_client.recognize(config=config, audio=recognition_audio)
-                    
-                    if not response.results:
-                        st.warning("⚠️ Could not transcribe the file. Please check if the audio is clear and the language settings are correct.")
-                        st.stop()
-                    
-                    status_text.text("📝 Processing transcription...")
-                    progress_bar.progress(70)
-                    
-                    full_transcript = ""
-                    timestamps_data = []
-                    for result in response.results:
-                        full_transcript += result.alternatives[0].transcript + " "
-                        if enable_word_timestamps:
-                            for word_info in result.alternatives[0].words:
-                                timestamps_data.append({
-                                    'word': word_info.word,
-                                    'start_time': word_info.start_time.total_seconds(),
-                                    'end_time': word_info.end_time.total_seconds()
-                                })
-                    
-                    tamil_transcript = full_transcript.strip()
-                    
-                    status_text.text("🌍 Generating all language versions...")
-                    progress_bar.progress(85)
-                    
-                    translations = generate_initial_translations(tamil_transcript)
-                    
-                    status_text.text("💾 Saving results...")
-                    progress_bar.progress(95)
-                    
-                    st.session_state.original_transcript = tamil_transcript
-                    st.session_state.tamil_transcript = translations['tamil']
-                    st.session_state.tanglish_transcript = translations['tanglish']
-                    st.session_state.english_transcript = translations['english']
-                    st.session_state.timestamps = timestamps_data
-                    st.session_state.original_translations = translations.copy()
-                    st.session_state.original_translations['timestamps'] = timestamps_data
-                    
-                    cache_translation_results(audio_hash, st.session_state.original_translations)
-                    
-                    st.session_state.editing_mode = True
-                    
-                    progress_bar.progress(100)
-                    status_text.text("✅ Processing complete!")
-                    
-                    time.sleep(1)
-                    st.success("🎉 File processed successfully!")
-                    st.rerun()
-
-                except Exception as e:
-                    st.error(f"❌ An error occurred during processing: {str(e)}")
-                    st.error("Please try again or contact support if the problem persists.")
+        # Process button
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🚀 Start Processing", type="primary", use_container_width=True):
+                st.session_state.current_step = 2
+                st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-with col2:
-    st.markdown('<div class="edit-card">', unsafe_allow_html=True)
-    st.markdown("## 📝 Edit Transcript")
-
-    if st.session_state.editing_mode and st.session_state.tanglish_transcript:
+# STEP 2: Processing
+elif st.session_state.current_step == 2:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### 🔄 Processing Your File")
+    
+    # Processing logic
+    progress_container = st.container()
+    status_container = st.container()
+    
+    with progress_container:
+        progress_bar = st.progress(0)
+    
+    with status_container:
+        status_text = st.empty()
+    
+    try:
+        # Reset states
+        st.session_state.editing_mode = False
+        st.session_state.save_message = ""
         
-        if st.session_state.save_message:
-            st.markdown(f'<div class="save-success">{st.session_state.save_message}</div>', unsafe_allow_html=True)
+        status_text.info("📁 Reading file...")
+        progress_bar.progress(10)
+        time.sleep(0.5)
         
-        st.markdown("""
-        <div class="edit-info">
-            ✨ <strong>Unlimited Editing Mode Active</strong><br>
-            Edit as much as you want - changes are processed locally for instant updates.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col_edit1, col_edit2, col_edit3 = st.columns([2, 1, 1])
-        with col_edit1:
-            st.markdown("### ✏️ Smart Editing Tools")
-        with col_edit2:
-            if st.button("🔄 Smart Sync", help="Sync other languages with your edits locally", use_container_width=True):
-                with st.spinner("🔄 Syncing languages locally..."):
-                    synced_result, change_type = smart_text_sync(
-                        st.session_state.tanglish_transcript, 
-                        st.session_state.original_translations
-                    )
-                    
-                    if synced_result:
-                        st.session_state.tamil_transcript = synced_result['tamil']
-                        st.session_state.english_transcript = synced_result['english']
-                        st.session_state.save_message = "✅ Languages synced locally!"
-                    else:
-                        st.session_state.save_message = "⚠️ Major changes detected. Use 'AI Re-translate' for better accuracy."
-                    st.rerun()
-        
-        with col_edit3:
-            if st.button("🤖 AI Re-translate", help="Use AI to re-translate all languages", use_container_width=True):
-                with st.spinner("🤖 Re-translating with AI..."):
-                    try:
-                        new_translations = generate_initial_translations(st.session_state.tanglish_transcript)
-                        
-                        st.session_state.tamil_transcript = new_translations['tamil']
-                        st.session_state.english_transcript = new_translations['english']
-                        st.session_state.save_message = "✅ Re-translated with AI!"
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Re-translation failed: {e}")
-        
-        col_quick1, col_quick2, col_quick3 = st.columns(3)
-        with col_quick1:
-            if st.button("🔤 Fix Common Errors", help="Apply common Tamil speech-to-text corrections", use_container_width=True):
-                corrected_text = local_text_corrections(st.session_state.tanglish_transcript)
-                st.session_state.tanglish_transcript = corrected_text
-                st.session_state.save_message = "✅ Common errors fixed!"
-                st.rerun()
-        
-        with col_quick2:
-            if st.button("↩️ Reset to Original", help="Reset to original transcription", use_container_width=True):
-                if st.session_state.original_translations:
-                    st.session_state.tanglish_transcript = st.session_state.original_translations['tanglish']
-                    st.session_state.tamil_transcript = st.session_state.original_translations['tamil']
-                    st.session_state.english_transcript = st.session_state.original_translations['english']
-                    st.session_state.save_message = "↩️ Reset to original!"
-                    st.rerun()
-        
-        with col_quick3:
-            if st.button("📋 Copy Tanglish", help="Copy Tanglish text to clipboard", use_container_width=True):
-                st.session_state.save_message = "📋 Tanglish text ready to copy from the editor below!"
-                st.rerun()
-        
-        st.markdown("### 📝 Edit Your Transcript")
-        st.info("💡 **Pro Tip:** Edit freely in Tanglish! Use 'Smart Sync' for free local updates or 'AI Re-translate' for AI-powered accuracy.")
-        
-        edited_tanglish = st.text_area(
-            "Edit your transcript (Tanglish):",
-            value=st.session_state.tanglish_transcript,
-            height=250,
-            key="tanglish_editor",
-            help="Edit in Tanglish - unlimited edits! Changes are saved automatically.",
-            placeholder="Your Tanglish transcript will appear here..."
+        # Get uploaded file from session or reupload
+        uploaded_file = st.file_uploader(
+            "File",
+            type=["mp3", "wav", "m4a", "ogg", "flac", "mp4", "mov", "avi", "mkv"],
+            label_visibility="collapsed",
+            key="processing_uploader"
         )
         
-        if edited_tanglish != st.session_state.tanglish_transcript:
-            st.session_state.tanglish_transcript = edited_tanglish
-            st.session_state.save_message = ""
+        if not uploaded_file:
+            st.warning("Please upload a file first!")
+            if st.button("← Back to Upload"):
+                st.session_state.current_step = 1
+                st.rerun()
+            st.stop()
         
-        word_count = len(edited_tanglish.split()) if edited_tanglish else 0
-        char_count = len(edited_tanglish) if edited_tanglish else 0
+        audio_content = uploaded_file.getvalue()
+        audio_hash = get_audio_hash(audio_content)
+        st.session_state.audio_hash = audio_hash
         
-        col_stats1, col_stats2, col_stats3 = st.columns(3)
-        with col_stats1:
-            st.metric("📊 Words", word_count)
-        with col_stats2:
-            st.metric("🔤 Characters", char_count)
-        with col_stats3:
-            estimated_duration = word_count / 150 if word_count > 0 else 0
-            st.metric("⏱️ Est. Duration", f"{estimated_duration:.1f} min")
+        status_text.info("🔍 Checking cache...")
+        progress_bar.progress(20)
+        time.sleep(0.5)
         
-        st.markdown("### 📖 Language Previews")
-        tab1, tab2, tab3 = st.tabs(["🔤 Tanglish (Editable)", "🕉️ Tamil", "🌍 English"])
+        cached_results = get_cached_translations(audio_hash)
         
-        with tab1:
-            st.text_area(
-                "Current Tanglish:", 
-                value=st.session_state.tanglish_transcript, 
-                height=120, 
-                disabled=True,
-                help="This is your current Tanglish text"
-            )
+        if cached_results:
+            status_text.success("⚡ Loading from cache...")
+            progress_bar.progress(100)
+            
+            st.session_state.original_transcript = cached_results['tamil']
+            st.session_state.tamil_transcript = cached_results['tamil']
+            st.session_state.tanglish_transcript = cached_results['tanglish']
+            st.session_state.english_transcript = cached_results['english']
+            st.session_state.timestamps = cached_results.get('timestamps', [])
+            st.session_state.original_translations = cached_results
+            st.session_state.editing_mode = True
+            st.session_state.current_step = 3
+            st.session_state.audio_content = audio_content
+            
+            time.sleep(1)
+            st.rerun()
         
-        with tab2:
-            st.text_area(
-                "Current Tamil:", 
-                value=st.session_state.tamil_transcript, 
-                height=120, 
-                disabled=True,
-                help="Tamil version - updates when you sync or re-translate"
-            )
+        # Process file
+        file_extension = uploaded_file.name.lower().split('.')[-1]
+        is_video = file_extension in ['mp4', 'mov', 'avi', 'mkv']
         
-        with tab3:
-            st.text_area(
-                "Current English:", 
-                value=st.session_state.english_transcript, 
-                height=120, 
-                disabled=True,
-                help="English version - updates when you sync or re-translate"
-            )
-    
-    else:
-        st.markdown("""
-        <div class="info-box">
-            👈 <strong>Upload a file to get started!</strong><br>
-            Once you upload and process an audio/video file, you'll be able to edit the transcript here.
-        </div>
-        """, unsafe_allow_html=True)
+        if is_video:
+            status_text.info("🎥 Extracting audio from video...")
+            progress_bar.progress(30)
+            time.sleep(1)
+            
+            processed_audio, success = process_video_to_audio(audio_content)
+            if not success:
+                st.error("❌ Failed to extract audio from video. Please try a different file.")
+                st.stop()
+            content = processed_audio
+        else:
+            status_text.info("🎵 Processing audio...")
+            progress_bar.progress(30)
+            time.sleep(1)
+            
+            audio_segment = AudioSegment.from_file(io.BytesIO(audio_content))
+            audio_segment = audio_segment.set_frame_rate(16000).set_channels(1)
+            buffer = io.BytesIO()
+            audio_segment.export(buffer, format="flac")
+            content = buffer.getvalue()
         
-        st.markdown("### 🌟 What You'll Get:")
-        st.markdown("""
-        - **🎯 Accurate Tanglish**: Natural Tamil in English script
-        - **✏️ Unlimited Editing**: Edit as much as you want
-        - **🔄 Smart Sync**: Local updates without API calls
-        - **🤖 AI Re-translate**: AI-powered accuracy improvements
-        - **📊 Real-time Stats**: Word count, duration estimates
-        - **💾 Auto-save**: Changes saved automatically
-        """)
+        # Store processed audio for playback
+        st.session_state.audio_content = content
+        
+        status_text.info("🗣️ Converting speech to text...")
+        progress_bar.progress(50)
+        time.sleep(1)
+        
+        recognition_audio = speech.RecognitionAudio(content=content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
+            sample_rate_hertz=16000,
+            language_code=st.session_state.get('primary_language', 'ta-IN'),
+            alternative_language_codes=[st.session_state.get('secondary_language', 'en-IN')],
+            enable_automatic_punctuation=st.session_state.get('enable_punctuation', True),
+            enable_word_time_offsets=st.session_state.get('enable_word_timestamps', True),
+            model="latest_long"
+        )
+
+        response = speech_client.recognize(config=config, audio=recognition_audio)
+        
+        if not response.results:
+            st.warning("⚠️ Could not transcribe the file. Please check audio quality and language settings.")
+            st.stop()
+        
+        status_text.info("📝 Processing transcription...")
+        progress_bar.progress(70)
+        time.sleep(1)
+        
+        full_transcript = ""
+        timestamps_data = []
+        for result in response.results:
+            full_transcript += result.alternatives[0].transcript + " "
+            if st.session_state.get('enable_word_timestamps', True):
+                for word_info in result.alternatives[0].words:
+                    timestamps_data.append({
+                        'word': word_info.word,
+                        'start_time': word_info.start_time.total_seconds(),
+                        'end_time': word_info.end_time.total_seconds()
+                    })
+        
+        tamil_transcript = full_transcript.strip()
+        
+        status_text.info("🌍 Generating translations...")
+        progress_bar.progress(85)
+        time.sleep(1)
+        
+        translations = generate_initial_translations(tamil_transcript)
+        
+        status_text.info("💾 Saving results...")
+        progress_bar.progress(95)
+        time.sleep(0.5)
+        
+        st.session_state.original_transcript = tamil_transcript
+        st.session_state.tamil_transcript = translations['tamil']
+        st.session_state.tanglish_transcript = translations['tanglish']
+        st.session_state.english_transcript = translations['english']
+        st.session_state.timestamps = timestamps_data
+        st.session_state.original_translations = translations.copy()
+        st.session_state.original_translations['timestamps'] = timestamps_data
+        
+        cache_translation_results(audio_hash, st.session_state.original_translations)
+        
+        st.session_state.editing_mode = True
+        st.session_state.current_step = 3
+        
+        progress_bar.progress(100)
+        status_text.success("✅ Processing complete!")
+        time.sleep(1)
+        st.rerun()
+
+    except Exception as e:
+        st.error(f"❌ Processing failed: {str(e)}")
+        if st.button("← Back to Upload"):
+            st.session_state.current_step = 1
+            st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Export Section
-if st.session_state.editing_mode and st.session_state.tanglish_transcript:
-    st.markdown("---")
-    st.markdown("## 📥 Export Options")
+# STEP 3: Edit
+elif st.session_state.current_step == 3 and st.session_state.editing_mode:
+    # Audio player if available
+    if st.session_state.audio_content:
+        st.markdown('<div class="audio-player">', unsafe_allow_html=True)
+        st.markdown("#### 🎵 Audio Playback")
+        st.audio(st.session_state.audio_content)
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    col_export1, col_export2 = st.columns([1, 1])
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### ✏️ Edit Your Transcript")
     
-    with col_export1:
+    if st.session_state.save_message:
+        st.markdown(f'<div class="success-box">{st.session_state.save_message}</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="info-box">
+        💡 <strong>Pro Tip:</strong> Edit in Tanglish for best results. Use 'Smart Sync' for quick updates or 'AI Re-translate' for accuracy.
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Editing tools
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("🔄 Smart Sync", help="Sync other languages with your edits locally", use_container_width=True):
+            with st.spinner("🔄 Syncing languages..."):
+                synced_result, change_type = smart_text_sync(
+                    st.session_state.tanglish_transcript, 
+                    st.session_state.original_translations
+                )
+                
+                if synced_result:
+                    st.session_state.tamil_transcript = synced_result['tamil']
+                    st.session_state.english_transcript = synced_result['english']
+                    st.session_state.save_message = "✅ Languages synced locally!"
+                else:
+                    st.session_state.save_message = "⚠️ Major changes detected. Use 'AI Re-translate' for better accuracy."
+                st.rerun()
+    
+    with col2:
+        if st.button("🤖 AI Re-translate", help="Use AI to re-translate all languages", use_container_width=True):
+            with st.spinner("🤖 Re-translating with AI..."):
+                try:
+                    new_translations = generate_initial_translations(st.session_state.tanglish_transcript)
+                    
+                    st.session_state.tamil_transcript = new_translations['tamil']
+                    st.session_state.english_transcript = new_translations['english']
+                    st.session_state.save_message = "✅ Re-translated with AI!"
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Re-translation failed: {e}")
+    
+    with col3:
+        if st.button("↩️ Reset Original", help="Reset to original transcription", use_container_width=True):
+            if st.session_state.original_translations:
+                st.session_state.tanglish_transcript = st.session_state.original_translations['tanglish']
+                st.session_state.tamil_transcript = st.session_state.original_translations['tamil']
+                st.session_state.english_transcript = st.session_state.original_translations['english']
+                st.session_state.save_message = "↩️ Reset to original!"
+                st.rerun()
+    
+    # Line-by-line transcript editor
+    st.markdown("#### 📝 Line-by-Line Editor")
+    
+    # Convert to line-by-line format
+    lines = st.session_state.tanglish_transcript.split('.')
+    lines = [line.strip() for line in lines if line.strip()]
+    
+    edited_lines = []
+    for i, line in enumerate(lines):
+        col_line, col_help = st.columns([10, 1])
+        with col_line:
+            edited_line = st.text_input(
+                f"Line {i+1}",
+                value=line,
+                key=f"line_{i}",
+                label_visibility="collapsed"
+            )
+            edited_lines.append(edited_line)
+        with col_help:
+            st.markdown(f'<span class="help-tooltip" title="Edit this line">❓</span>', unsafe_allow_html=True)
+    
+    # Update transcript from lines
+    new_transcript = '. '.join(edited_lines)
+    if new_transcript != st.session_state.tanglish_transcript:
+        st.session_state.tanglish_transcript = new_transcript
+        st.session_state.save_message = ""
+    
+    # Stats
+    word_count = len(new_transcript.split()) if new_transcript else 0
+    char_count = len(new_transcript) if new_transcript else 0
+    estimated_duration = word_count / 150 if word_count > 0 else 0
+    
+    col_stat1, col_stat2, col_stat3 = st.columns(3)
+    with col_stat1:
+        st.metric("📊 Words", word_count)
+    with col_stat2:
+        st.metric("🔤 Characters", char_count)
+    with col_stat3:
+        st.metric("⏱️ Duration", f"{estimated_duration:.1f} min")
+    
+    # Language preview tabs
+    st.markdown("#### 📖 Language Previews")
+    tab1, tab2, tab3 = st.tabs(["🔤 Tanglish", "🕉️ Tamil", "🌍 English"])
+    
+    with tab1:
+        st.text_area(
+            "Tanglish Preview:", 
+            value=st.session_state.tanglish_transcript, 
+            height=150, 
+            disabled=True,
+            key="tanglish_preview"
+        )
+    
+    with tab2:
+        st.text_area(
+            "Tamil Preview:", 
+            value=st.session_state.tamil_transcript, 
+            height=150, 
+            disabled=True,
+            key="tamil_preview"
+        )
+    
+    with tab3:
+        st.text_area(
+            "English Preview:", 
+            value=st.session_state.english_transcript, 
+            height=150, 
+            disabled=True,
+            key="english_preview"
+        )
+    
+    # Navigation
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("← Back to Process"):
+            st.session_state.current_step = 2
+            st.rerun()
+    with col3:
+        if st.button("Continue to Export →"):
+            st.session_state.current_step = 4
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# STEP 4: Export
+elif st.session_state.current_step == 4:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### 🎬 Export Configuration")
+    
+    st.markdown("""
+    <div class="info-box">
+        🎯 <strong>Choose your export settings:</strong> Configure subtitles like a professional video editor
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Export options in columns
+    col1, col2 = st.columns(2)
+    
+    with col1:
         export_language = st.selectbox(
-            "🌍 Select Language:",
+            "🌍 Language",
             ["Tanglish", "Tamil", "English"],
             help="Choose which language version to download"
         )
-    
-    with col_export2:
+        
         export_format = st.selectbox(
-            "📄 Select Format:",
+            "📄 Format",
             ["TXT", "SRT"],
-            help="Choose file format"
+            help="TXT for text, SRT for video subtitles"
         )
+    
+    with col2:
+        if export_format == "SRT":
+            max_chars = st.slider(
+                "🔤 Max characters per subtitle",
+                min_value=20, max_value=80, value=42,
+                help="Premiere Pro style character limit"
+            )
+            
+            min_duration = st.slider(
+                "⏱️ Min duration (seconds)",
+                min_value=1, max_value=10, value=3,
+                help="Minimum time each subtitle shows"
+            )
+            
+            lines_per_subtitle = st.radio(
+                "📝 Lines per subtitle",
+                ["Single", "Double"],
+                help="Single or double line subtitles"
+            )
+        else:
+            st.markdown("#### 📄 Text Export")
+            st.markdown("Clean text format for documents and scripts")
 
-    def create_srt(text, timestamps):
-        def format_time(seconds):
-            td = timedelta(seconds=seconds)
-            total_seconds = int(td.total_seconds())
-            hours = total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            secs = total_seconds % 60
-            millis = td.microseconds // 1000
-            return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+    # Preview section
+    st.markdown("#### 👁️ Export Preview")
+    
+    # Get export text
+    if export_language == "Tanglish":
+        export_text = st.session_state.tanglish_transcript
+    elif export_language == "Tamil":
+        export_text = st.session_state.tamil_transcript
+    else:
+        export_text = st.session_state.english_transcript
+    
+    if export_format == "SRT":
+        # Create SRT preview
+        def create_srt_preview(text, timestamps, max_chars=42):
+            def format_time(seconds):
+                td = timedelta(seconds=seconds)
+                total_seconds = int(td.total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                secs = total_seconds % 60
+                millis = td.microseconds // 1000
+                return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
-        text_words = text.split()
-        srt_content = ""
-        chunk_size = 8
-        
-        for i in range(0, len(text_words), chunk_size):
-            chunk_words = text_words[i : i + chunk_size]
-            if not chunk_words:
-                continue
+            words = text.split()
+            srt_content = ""
+            chunk_size = 8
             
-            timestamp_start_idx = min(i, len(timestamps) - 1) if timestamps else i
-            timestamp_end_idx = min(i + chunk_size - 1, len(timestamps) - 1) if timestamps else i + chunk_size - 1
-            
-            if timestamps and timestamp_start_idx < len(timestamps) and timestamp_end_idx < len(timestamps):
-                start_time = timestamps[timestamp_start_idx]['start_time']
-                end_time = timestamps[timestamp_end_idx]['end_time']
-            else:
-                start_time = i * 2
-                end_time = (i + chunk_size) * 2
-            
-            text_chunk = " ".join(chunk_words)
-            
-            subtitle_num = (i // chunk_size) + 1
-            srt_content += f"{subtitle_num}\n"
-            srt_content += f"{format_time(start_time)} --> {format_time(end_time)}\n"
-            srt_content += f"{text_chunk}\n\n"
-        
-        return srt_content
-
-    if st.button("📥 Generate & Download", type="primary", use_container_width=True):
-        with st.spinner(f"🔄 Preparing {export_language} {export_format} file..."):
-            try:
-                if export_language == "Tanglish":
-                    export_text = st.session_state.tanglish_transcript
-                elif export_language == "Tamil":
-                    export_text = st.session_state.tamil_transcript
+            for i in range(0, min(len(words), 24), chunk_size):  # Preview first 3 subtitles
+                chunk_words = words[i : i + chunk_size]
+                if not chunk_words:
+                    continue
+                
+                # Use timestamps if available
+                if timestamps and i < len(timestamps):
+                    start_time = timestamps[min(i, len(timestamps) - 1)].get('start_time', i * 2)
+                    end_time = timestamps[min(i + chunk_size - 1, len(timestamps) - 1)].get('end_time', (i + chunk_size) * 2)
                 else:
-                    export_text = st.session_state.english_transcript
+                    start_time = i * 2
+                    end_time = (i + chunk_size) * 2
                 
-                if export_format == "TXT":
-                    file_extension = "txt"
-                    file_data = export_text
-                    mime_type = "text/plain"
+                text_chunk = " ".join(chunk_words)
+                
+                # Respect character limit
+                if len(text_chunk) > max_chars:
+                    text_chunk = text_chunk[:max_chars-3] + "..."
+                
+                subtitle_num = (i // chunk_size) + 1
+                srt_content += f"{subtitle_num}\n"
+                srt_content += f"{format_time(start_time)} --> {format_time(end_time)}\n"
+                srt_content += f"{text_chunk}\n\n"
+            
+            srt_content += "... (preview of first 3 subtitles)"
+            return srt_content
+        
+        preview_content = create_srt_preview(
+            export_text, 
+            st.session_state.timestamps,
+            max_chars if 'max_chars' in locals() else 42
+        )
+        st.code(preview_content, language="srt")
+        
+    else:
+        # Text preview
+        preview_text = export_text[:300] + "..." if len(export_text) > 300 else export_text
+        st.text_area("Preview:", value=preview_text, height=150, disabled=True)
+    
+    # Download section
+    st.markdown("#### 📥 Download")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        if st.button("📥 Generate & Download", type="primary", use_container_width=True):
+            with st.spinner(f"🔄 Preparing {export_language} {export_format} file..."):
+                try:
+                    if export_format == "TXT":
+                        file_data = export_text
+                        mime_type = "text/plain"
+                        file_extension = "txt"
+                    else:
+                        # Create full SRT
+                        def create_full_srt(text, timestamps, max_chars=42):
+                            def format_time(seconds):
+                                td = timedelta(seconds=seconds)
+                                total_seconds = int(td.total_seconds())
+                                hours = total_seconds // 3600
+                                minutes = (total_seconds % 3600) // 60
+                                secs = total_seconds % 60
+                                millis = td.microseconds // 1000
+                                return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+
+                            words = text.split()
+                            srt_content = ""
+                            chunk_size = 8
+                            
+                            for i in range(0, len(words), chunk_size):
+                                chunk_words = words[i : i + chunk_size]
+                                if not chunk_words:
+                                    continue
+                                
+                                if timestamps and i < len(timestamps):
+                                    start_time = timestamps[min(i, len(timestamps) - 1)].get('start_time', i * 2)
+                                    end_time = timestamps[min(i + chunk_size - 1, len(timestamps) - 1)].get('end_time', (i + chunk_size) * 2)
+                                else:
+                                    start_time = i * 2
+                                    end_time = (i + chunk_size) * 2
+                                
+                                text_chunk = " ".join(chunk_words)
+                                
+                                if len(text_chunk) > max_chars:
+                                    text_chunk = text_chunk[:max_chars-3] + "..."
+                                
+                                subtitle_num = (i // chunk_size) + 1
+                                srt_content += f"{subtitle_num}\n"
+                                srt_content += f"{format_time(start_time)} --> {format_time(end_time)}\n"
+                                srt_content += f"{text_chunk}\n\n"
+                            
+                            return srt_content
+                        
+                        file_data = create_full_srt(
+                            export_text, 
+                            st.session_state.timestamps,
+                            max_chars if 'max_chars' in locals() else 42
+                        )
+                        mime_type = "text/plain"
+                        file_extension = "srt"
+                    
+                    filename = f"transcript_{export_language.lower()}.{file_extension}"
+                    
+                    st.download_button(
+                        label=f"📥 Download {export_language} {export_format}",
+                        data=file_data,
+                        file_name=filename,
+                        mime=mime_type,
+                        use_container_width=True,
+                        key="download_btn"
+                    )
+                    
+                    st.markdown(f"""
+                    <div class="success-box">
+                        ✅ <strong>Ready for download!</strong><br>
+                        📁 File: {filename} | 📊 Size: {len(file_data.encode('utf-8')) / 1024:.1f} KB
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                except Exception as e:
+                    st.error(f"❌ Export failed: {e}")
+    
+    with col2:
+        if st.button("🔄 New File", help="Process another file", use_container_width=True):
+            # Reset all session state
+            for var in session_vars:
+                if var == 'current_step':
+                    st.session_state[var] = 1
+                elif var == 'editing_mode':
+                    st.session_state[var] = False
+                elif var in ['timestamps', 'original_translations']:
+                    st.session_state[var] = {}
                 else:
-                    file_extension = "srt"
-                    file_data = create_srt(export_text, st.session_state.timestamps)
-                    mime_type = "text/plain"
-                
-                filename = f"transcript_{export_language.lower()}.{file_extension}"
-                
-                st.download_button(
-                    label=f"📥 Download {export_language} {export_format}",
-                    data=file_data,
-                    file_name=filename,
-                    mime=mime_type,
-                    use_container_width=True,
-                )
-                
-                st.success(f"✅ {export_language} {export_format} file ready for download!")
-                
-            except Exception as e:
-                st.error(f"❌ Error generating {export_language} version: {e}")
+                    st.session_state[var] = ""
+            st.rerun()
+    
+    # Navigation
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("← Back to Edit"):
+            st.session_state.current_step = 3
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Invalid step fallback
+else:
+    st.session_state.current_step = 1
+    st.rerun()
 
 # Footer
-if not st.session_state.editing_mode:
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 15px; margin: 2rem 0;">
-        <h3 style="color: #2c3e50; margin-bottom: 1rem;">🚀 Ready to Get Started?</h3>
-        <p style="color: #6c757d; font-size: 1.1rem; margin-bottom: 1.5rem;">
-            Upload your audio or video file above to experience the power of AI-driven Tamil caption generation!
-        </p>
-        <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
-            <div style="text-align: center;">
-                <div style="font-size: 2rem; color: #4ECDC4;">⚡</div>
-                <strong>Fast Processing</strong>
-            </div>
-            <div style="text-align: center;">
-                <div style="font-size: 2rem; color: #FF6B6B;">🎯</div>
-                <strong>High Accuracy</strong>
-            </div>
-            <div style="text-align: center;">
-                <div style="font-size: 2rem; color: #667eea;">🔄</div>
-                <strong>Unlimited Edits</strong>
-            </div>
-            <div style="text-align: center;">
-                <div style="font-size: 2rem; color: #764ba2;">📥</div>
-                <strong>Multiple Formats</strong>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Help Section
-with st.expander("❓ Help & Tips", expanded=False):
-    st.markdown("""
-    ### 🎯 Getting the Best Results
-    
-    **For Audio Files:**
-    - Use clear, high-quality recordings
-    - Minimize background noise
-    - Speak clearly and at moderate pace
-    
-    **For Video Files:**
-    - Ensure good audio quality in the video
-    - Videos with clear speech work best
-    - The app automatically extracts audio from video
-    
-    **Language Settings:**
-    - Choose Tamil as primary language for Tamil content
-    - Use English as secondary for mixed content
-    - Enable punctuation for better readability
-    
-    **Editing Tips:**
-    - Edit in Tanglish for easier understanding
-    - Use 'Smart Sync' for quick local updates
-    - Use 'AI Re-translate' for major changes
-    - The app auto-saves your changes
-    
-    **Export Options:**
-    - TXT: Plain text format
-    - SRT: For video players and YouTube
-    
-    ### 🛠️ Troubleshooting
-    
-    **If transcription is inaccurate:**
-    1. Check language settings
-    2. Try re-uploading with better audio quality
-    3. Use the editing tools to make corrections
-    
-    **If translation seems wrong:**
-    1. Edit the Tanglish version manually
-    2. Use 'AI Re-translate' for better results
-    3. Try 'Fix Common Errors' for typical mistakes
-    
-    **File Upload Issues:**
-    - Maximum file size: 200MB
-    - Supported formats: WAV, MP3, FLAC, M4A, OGG, MP4, AVI, MOV, MKV
-    - Try converting to MP3 if other formats don't work
-    """)
-
-# About Section
-with st.expander("ℹ️ About Tamil Caption Generator Pro", expanded=False):
-    st.markdown("""
-    ### 🎬 About This Tool
-    
-    Tamil Caption Generator Pro is an AI-powered tool that converts audio and video content into accurate Tamil captions in multiple languages and formats.
-    
-    **Key Features:**
-    - 🎤 Audio & Video Support
-    - 🗣️ Multi-language Output (Tamil, Tanglish, English)
-    - ✏️ Unlimited Editing Capabilities
-    - 📥 Professional Export Options
-    - ⚡ Smart Caching for Faster Processing
-    - 🔄 Real-time Sync and Translation
-    
-    **Technology Stack:**
-    - Google Cloud Speech-to-Text API
-    - Google Gemini AI for Translation
-    - Streamlit for User Interface
-    - PyDub for Audio Processing
-    
-    **Perfect For:**
-    - Content Creators
-    - Educators
-    - Researchers
-    - Media Professionals
-    - Anyone working with Tamil content
-    
-    ### 🔒 Privacy & Security
-    - Your files are processed securely
-    - No permanent storage of your content
-    - Cached results are temporary and local
-    - All processing happens in secure cloud environments
-    """)
-
-st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #6c757d; padding: 1rem;">
-    <p>Made with ❤️ for the Tamil community | Powered by AI</p>
+<div style="text-align: center; padding: 2rem; margin-top: 3rem; border-top: 1px solid #e5e7eb;">
+    <p style="color: #6b7280; margin: 0;">
+        Made with ❤️ for the Tamil community | Professional AI-powered transcription
+    </p>
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
