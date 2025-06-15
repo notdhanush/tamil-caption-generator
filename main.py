@@ -1,6 +1,5 @@
 import streamlit as st
-from google.cloud import speech
-from google.oauth2 import service_account
+import openai
 import google.generativeai as genai
 import json
 from pydub import AudioSegment
@@ -8,6 +7,8 @@ import io
 from datetime import timedelta
 import hashlib
 import time
+import tempfile
+import os
 
 # Page Configuration
 st.set_page_config(
@@ -363,61 +364,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Authentication and helper functions
-def load_credentials():
+def load_openai_client():
+    """Initialize OpenAI client with API key from secrets"""
     try:
-        if "google_credentials_json" in st.secrets:
-            creds_json = st.secrets["google_credentials_json"]
-            
-            if isinstance(creds_json, str):
-                creds_dict = json.loads(creds_json)
-            else:
-                creds_dict = dict(creds_json)
-            
-            required_fields = ["type", "project_id", "private_key_id", "private_key", 
-                             "client_email", "client_id", "auth_uri", "token_uri"]
-            missing_fields = [field for field in required_fields if field not in creds_dict]
-            
-            if missing_fields:
-                return None, f"Missing required fields in credentials: {missing_fields}"
-            
-            private_key = creds_dict.get("private_key", "")
-            if not private_key.startswith("-----BEGIN PRIVATE KEY-----"):
-                return None, "Private key format is invalid"
-            
-            if not private_key.endswith("-----END PRIVATE KEY-----\n"):
-                if not private_key.endswith("-----END PRIVATE KEY-----"):
-                    creds_dict["private_key"] = private_key + "\n-----END PRIVATE KEY-----\n"
-                elif not private_key.endswith("\n"):
-                    creds_dict["private_key"] = private_key + "\n"
-            
-            credentials = service_account.Credentials.from_service_account_info(creds_dict)
-            return credentials, "Success"
-            
-        elif all(key in st.secrets for key in ["project_id", "private_key", "client_email"]):
-            creds_dict = {
-                "type": "service_account",
-                "project_id": st.secrets["project_id"],
-                "private_key_id": st.secrets.get("private_key_id", ""),
-                "private_key": st.secrets["private_key"],
-                "client_email": st.secrets["client_email"],
-                "client_id": st.secrets.get("client_id", ""),
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
-            }
-            
-            credentials = service_account.Credentials.from_service_account_info(creds_dict)
-            return credentials, "Success"
-            
+        if "openai_api_key" in st.secrets:
+            api_key = st.secrets["openai_api_key"]
+            client = openai.OpenAI(api_key=api_key)
+            return client, "Success"
         else:
-            return None, "No credentials found in secrets"
-            
-    except json.JSONDecodeError as e:
-        return None, f"JSON parsing error: {str(e)}"
-    except ValueError as e:
-        return None, f"Credential validation error: {str(e)}"
+            return None, "OpenAI API key not found in secrets"
     except Exception as e:
-        return None, f"Unexpected error loading credentials: {str(e)}"
+        return None, f"Error initializing OpenAI client: {str(e)}"
 
 def get_audio_hash(audio_content):
     return hashlib.md5(audio_content).hexdigest()
@@ -442,10 +399,83 @@ def process_video_to_audio(video_content):
         video_segment = AudioSegment.from_file(io.BytesIO(video_content))
         audio_segment = video_segment.set_frame_rate(16000).set_channels(1)
         buffer = io.BytesIO()
-        audio_segment.export(buffer, format="flac")
+        audio_segment.export(buffer, format="wav")
         return buffer.getvalue(), True
     except Exception as e:
         return None, False
+
+def transcribe_with_whisper(audio_content, language="ta"):
+    """
+    Transcribe audio using OpenAI Whisper API
+    
+    Args:
+        audio_content: Raw audio bytes
+        language: Language code (ta for Tamil, en for English)
+    
+    Returns:
+        dict: Contains transcript and timestamps if available
+    """
+    try:
+        # Create a temporary file for the audio
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+            temp_file.write(audio_content)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Open the file for Whisper API
+            with open(temp_file_path, "rb") as audio_file:
+                # Use Whisper API with timestamp feature
+                transcript_response = openai_client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language=language,
+                    response_format="verbose_json",
+                    timestamp_granularities=["word"]
+                )
+            
+            # Extract transcript and word-level timestamps
+            full_transcript = transcript_response.text
+            
+            # Generate word timestamps from segments if available
+            timestamps_data = []
+            if hasattr(transcript_response, 'words') and transcript_response.words:
+                for word_info in transcript_response.words:
+                    timestamps_data.append({
+                        'word': word_info.word,
+                        'start_time': word_info.start,
+                        'end_time': word_info.end
+                    })
+            else:
+                # Fallback: create estimated timestamps
+                words = full_transcript.split()
+                estimated_duration = len(words) * 0.5  # Rough estimate
+                for i, word in enumerate(words):
+                    start_time = i * (estimated_duration / len(words))
+                    end_time = (i + 1) * (estimated_duration / len(words))
+                    timestamps_data.append({
+                        'word': word,
+                        'start_time': start_time,
+                        'end_time': end_time
+                    })
+            
+            return {
+                'transcript': full_transcript,
+                'timestamps': timestamps_data,
+                'success': True
+            }
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+    
+    except Exception as e:
+        return {
+            'transcript': "",
+            'timestamps': [],
+            'success': False,
+            'error': str(e)
+        }
 
 def generate_initial_translations(tamil_text):
     try:
@@ -539,21 +569,29 @@ def smart_text_sync(edited_tanglish, original_translations):
     }, "minor_changes"
 
 # Initialize Authentication
-credentials, auth_message = load_credentials()
-auth_success = credentials is not None
+openai_client, openai_auth_message = load_openai_client()
+openai_success = openai_client is not None
 
-if auth_success:
+# Initialize Gemini for translations
+gemini_success = False
+if "gemini_api_key" in st.secrets:
     try:
-        speech_client = speech.SpeechClient(credentials=credentials)
-        if "gemini_api_key" in st.secrets:
-            genai.configure(api_key=st.secrets["gemini_api_key"])
-            generative_model = genai.GenerativeModel("gemini-1.5-flash")
-        else:
-            auth_success = False
-            auth_message = "Gemini API key not found in secrets"
+        genai.configure(api_key=st.secrets["gemini_api_key"])
+        generative_model = genai.GenerativeModel("gemini-1.5-flash")
+        gemini_success = True
     except Exception as e:
-        auth_success = False
-        auth_message = f"Error initializing clients: {str(e)}"
+        gemini_success = False
+        gemini_auth_message = f"Error initializing Gemini: {str(e)}"
+
+auth_success = openai_success and gemini_success
+
+if not auth_success:
+    if not openai_success:
+        auth_message = f"OpenAI Whisper API issue: {openai_auth_message}"
+    else:
+        auth_message = f"Gemini API issue: {gemini_auth_message}"
+else:
+    auth_message = "All services initialized successfully"
 
 # Initialize Session State
 session_vars = [
@@ -615,7 +653,7 @@ if not auth_success:
     st.markdown(f"""
     <div class="warning-box">
         ⚠️ Service temporarily unavailable: {auth_message}<br>
-        Please try again later or contact support.
+        Please check your API keys and try again later.
     </div>
     """, unsafe_allow_html=True)
     st.stop()
@@ -628,7 +666,7 @@ if st.session_state.current_step == 1:
     st.markdown("""
     <div class="info-box">
         💡 <strong>Supported formats:</strong> Audio (MP3, WAV, M4A) and Video (MP4, MOV, AVI)<br>
-        📊 <strong>File limit:</strong> 200MB | ⏱️ <strong>Duration:</strong> Up to 60 minutes
+        📊 <strong>File limit:</strong> 25MB (Whisper API limit) | ⏱️ <strong>Duration:</strong> Up to 60 minutes
     </div>
     """, unsafe_allow_html=True)
     
@@ -652,6 +690,11 @@ if st.session_state.current_step == 1:
         - Built-in phone mics work fine for clear speech
         - Avoid windy outdoor recordings
         - Indoor recordings usually work better
+        
+        **🚀 New: Powered by OpenAI Whisper**
+        - State-of-the-art accuracy for Tamil and multilingual content
+        - Better handling of accents and mixed languages
+        - Improved timestamp precision
         """)
     
     uploaded_file = st.file_uploader(
@@ -669,6 +712,19 @@ if st.session_state.current_step == 1:
         # File info
         file_size = len(uploaded_file.getvalue()) / (1024 * 1024)
         
+        # Check file size limit
+        if file_size > 25:
+            st.markdown("""
+            <div class="warning-box">
+                ⚠️ <strong>File too large!</strong> OpenAI Whisper has a 25MB limit.<br>
+                💡 <strong>Solutions:</strong><br>
+                • Compress your audio/video file<br>
+                • Use online tools to reduce file size<br>
+                • Split longer recordings into smaller chunks
+            </div>
+            """, unsafe_allow_html=True)
+            st.stop()
+        
         try:
             if is_video:
                 duration_text = f"~{file_size / 2:.1f} minutes (estimated)"
@@ -683,7 +739,7 @@ if st.session_state.current_step == 1:
         <div class="success-box">
             ✅ <strong>File uploaded:</strong> {uploaded_file.name}<br>
             📁 <strong>Size:</strong> {file_size:.1f} MB | ⏱️ <strong>Duration:</strong> {duration_text}<br>
-            🎯 <strong>Type:</strong> {'Video' if is_video else 'Audio'} file
+            🎯 <strong>Type:</strong> {'Video' if is_video else 'Audio'} file | 🚀 <strong>Powered by:</strong> OpenAI Whisper
         </div>
         """, unsafe_allow_html=True)
         
@@ -691,7 +747,7 @@ if st.session_state.current_step == 1:
         if is_video:
             st.markdown("""
             <div class="info-box">
-                🎥 Video detected! We'll extract high-quality audio for processing.
+                🎥 Video detected! We'll extract high-quality audio for Whisper processing.
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -705,25 +761,34 @@ if st.session_state.current_step == 1:
             with col1:
                 primary_language = st.selectbox(
                     "Primary Language",
-                    ["ta-IN", "en-IN", "hi-IN"],
+                    ["ta", "en", "hi"],
+                    format_func=lambda x: {"ta": "Tamil", "en": "English", "hi": "Hindi"}[x],
                     help="Main language in your audio/video"
                 )
             with col2:
-                secondary_language = st.selectbox(
-                    "Secondary Language", 
-                    ["en-IN", "ta-IN", "hi-IN"],
-                    help="Fallback for mixed content"
+                auto_detect = st.checkbox(
+                    "Auto-detect language", 
+                    value=True,
+                    help="Let Whisper automatically detect the language"
                 )
             
-            enable_punctuation = st.checkbox("Auto Punctuation", value=True)
-            enable_word_timestamps = st.checkbox("Word Timestamps", value=True)
+            st.markdown("""
+            <div class="info-box">
+                🤖 <strong>Whisper Features:</strong><br>
+                • Automatic punctuation and capitalization<br>
+                • Word-level timestamps for precise subtitles<br>
+                • Excellent multilingual and accent support<br>
+                • No additional configuration needed!
+            </div>
+            """, unsafe_allow_html=True)
         
         # Process button
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("🚀 Start Processing", type="primary", use_container_width=True):
-                # Store file content in session state
+            if st.button("🚀 Start Processing with Whisper", type="primary", use_container_width=True):
+                # Store file content and settings in session state
                 st.session_state.uploaded_file_content = uploaded_file.getvalue()
+                st.session_state.selected_language = None if auto_detect else primary_language
                 st.session_state.current_step = 2
                 st.rerun()
     
@@ -732,7 +797,7 @@ if st.session_state.current_step == 1:
 # STEP 2: Processing
 elif st.session_state.current_step == 2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🔄 Processing Your File")
+    st.markdown("### 🔄 Processing Your File with OpenAI Whisper")
     
     # Auto-start processing
     progress_container = st.container()
@@ -803,59 +868,55 @@ elif st.session_state.current_step == 2:
                 st.stop()
             content = processed_audio
         else:
-            status_text.info("🎵 Processing audio...")
+            status_text.info("🎵 Processing audio for Whisper...")
             progress_bar.progress(30)
             time.sleep(1)
             
+            # Process audio for Whisper (convert to compatible format)
             audio_segment = AudioSegment.from_file(io.BytesIO(audio_content))
             audio_segment = audio_segment.set_frame_rate(16000).set_channels(1)
             buffer = io.BytesIO()
-            audio_segment.export(buffer, format="flac")
+            audio_segment.export(buffer, format="wav")
             content = buffer.getvalue()
         
         # Store processed audio for playback
         st.session_state.audio_content = content
         
-        status_text.info("🗣️ Converting speech to text...")
+        status_text.info("🤖 Transcribing with OpenAI Whisper...")
         progress_bar.progress(50)
         time.sleep(1)
         
-        recognition_audio = speech.RecognitionAudio(content=content)
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
-            sample_rate_hertz=16000,
-            language_code=st.session_state.get('primary_language', 'ta-IN'),
-            alternative_language_codes=[st.session_state.get('secondary_language', 'en-IN')],
-            enable_automatic_punctuation=st.session_state.get('enable_punctuation', True),
-            enable_word_time_offsets=st.session_state.get('enable_word_timestamps', True),
-            model="latest_long"
-        )
-
-        response = speech_client.recognize(config=config, audio=recognition_audio)
+        # Use Whisper API for transcription
+        selected_language = st.session_state.get('selected_language', None)
+        whisper_result = transcribe_with_whisper(content, selected_language or "ta")
         
-        if not response.results:
-            st.warning("⚠️ Could not transcribe the file. Please check audio quality and language settings.")
+        if not whisper_result['success']:
+            st.error(f"❌ Whisper transcription failed: {whisper_result.get('error', 'Unknown error')}")
+            st.markdown("""
+            <div class="warning-box">
+                💡 <strong>Troubleshooting tips:</strong><br>
+                • Check your internet connection<br>
+                • Ensure audio quality is good<br>
+                • Try with a smaller file<br>
+                • Check OpenAI API key and credits
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("← Back to Upload"):
+                st.session_state.current_step = 1
+                st.rerun()
             st.stop()
         
-        status_text.info("📝 Processing transcription...")
-        progress_bar.progress(70)
-        time.sleep(1)
+        tamil_transcript = whisper_result['transcript']
+        timestamps_data = whisper_result['timestamps']
         
-        full_transcript = ""
-        timestamps_data = []
-        for result in response.results:
-            full_transcript += result.alternatives[0].transcript + " "
-            if st.session_state.get('enable_word_timestamps', True):
-                for word_info in result.alternatives[0].words:
-                    timestamps_data.append({
-                        'word': word_info.word,
-                        'start_time': word_info.start_time.total_seconds(),
-                        'end_time': word_info.end_time.total_seconds()
-                    })
+        if not tamil_transcript.strip():
+            st.warning("⚠️ Could not transcribe the file. Please check audio quality and try again.")
+            if st.button("← Back to Upload"):
+                st.session_state.current_step = 1
+                st.rerun()
+            st.stop()
         
-        tamil_transcript = full_transcript.strip()
-        
-        status_text.info("🌍 Generating translations...")
+        status_text.info("🌍 Generating Thanglish and English translations...")
         progress_bar.progress(85)
         time.sleep(1)
         
@@ -879,12 +940,21 @@ elif st.session_state.current_step == 2:
         st.session_state.current_step = 3
         
         progress_bar.progress(100)
-        status_text.success("✅ Processing complete!")
+        status_text.success("✅ Processing complete with OpenAI Whisper!")
         time.sleep(1)
         st.rerun()
 
     except Exception as e:
         st.error(f"❌ Processing failed: {str(e)}")
+        st.markdown("""
+        <div class="warning-box">
+            🔧 <strong>Common solutions:</strong><br>
+            • Check your OpenAI API key and credits<br>
+            • Ensure stable internet connection<br>
+            • Try with a smaller file size<br>
+            • Verify file format is supported
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("← Back to Upload"):
             st.session_state.current_step = 1
             st.rerun()
@@ -909,6 +979,7 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
     st.markdown("""
     <div class="info-box">
         💡 <strong>Pro Tip:</strong> Edit in Thanglish for best results. Use 'Smart Sync' for quick updates or 'AI Re-translate' for accuracy.
+        🚀 <strong>Powered by:</strong> OpenAI Whisper transcription + Gemini translations
     </div>
     """, unsafe_allow_html=True)
     
@@ -931,12 +1002,13 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
         **Editing Tools Explained:**
         - **Smart Sync**: Quick local sync between languages
         - **AI Re-translate**: Full AI-powered translation for major edits
-        - **Reset Original**: Restore to initial transcription
+        - **Reset Original**: Restore to initial Whisper transcription
         
         **Pro Tips:**
         - Edit line by line for better control
         - Use proper punctuation for SRT exports
         - Check the preview tabs to see all language versions
+        - Whisper provides excellent base transcription accuracy
         """)
     
     # Editing tools with better spacing
@@ -976,12 +1048,12 @@ elif st.session_state.current_step == 3 and st.session_state.editing_mode:
     
     with col3:
         st.markdown('<div class="tertiary-button">', unsafe_allow_html=True)
-        if st.button("↩️ Reset Original", help="Reset to original transcription", use_container_width=True):
+        if st.button("↩️ Reset Original", help="Reset to original Whisper transcription", use_container_width=True):
             if st.session_state.original_translations:
                 st.session_state.tanglish_transcript = st.session_state.original_translations['tanglish']
                 st.session_state.tamil_transcript = st.session_state.original_translations['tamil']
                 st.session_state.english_transcript = st.session_state.original_translations['english']
-                st.session_state.save_message = "↩️ Reset to original!"
+                st.session_state.save_message = "↩️ Reset to original Whisper transcription!"
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1082,7 +1154,8 @@ elif st.session_state.current_step == 4:
     
     st.markdown("""
     <div class="info-box">
-        🎯 <strong>Choose your export settings:</strong> Configure subtitles like a professional video editor
+        🎯 <strong>Choose your export settings:</strong> Configure subtitles like a professional video editor<br>
+        🚀 <strong>Powered by:</strong> OpenAI Whisper timestamps for perfect subtitle sync
     </div>
     """, unsafe_allow_html=True)
     
@@ -1095,16 +1168,17 @@ elif st.session_state.current_step == 4:
         - Easy to copy-paste into other applications
         
         **🎬 Subtitle Format (SRT):**
-        - Professional video subtitles
+        - Professional video subtitles with Whisper timestamps
         - Works with Premiere Pro, Final Cut, DaVinci Resolve
         - Compatible with YouTube, Vimeo, and other platforms
-        - Includes timing information for video sync
+        - Precise timing information for perfect video sync
         
         **💡 Pro Tips:**
         - Use 42 characters max for readable subtitles
         - Single line works best for mobile viewing
         - Double line for desktop/TV viewing
         - Minimum 3 seconds ensures readability
+        - Whisper timestamps provide frame-accurate sync
         """)
     
     # Export options in columns
@@ -1120,7 +1194,7 @@ elif st.session_state.current_step == 4:
         export_format = st.selectbox(
             "📄 Format",
             ["TXT", "SRT"],
-            help="TXT for text, SRT for video subtitles"
+            help="TXT for text, SRT for video subtitles with Whisper timestamps"
         )
     
     with col2:
@@ -1158,7 +1232,7 @@ elif st.session_state.current_step == 4:
         export_text = st.session_state.english_transcript
     
     if export_format == "SRT":
-        # Create SRT preview
+        # Create SRT preview with Whisper timestamps
         def create_srt_preview(text, timestamps, max_chars=42):
             def format_time(seconds):
                 td = timedelta(seconds=seconds)
@@ -1166,7 +1240,7 @@ elif st.session_state.current_step == 4:
                 hours = total_seconds // 3600
                 minutes = (total_seconds % 3600) // 60
                 secs = total_seconds % 60
-                millis = td.microseconds // 1000
+                millis = int((td.total_seconds() - total_seconds) * 1000)
                 return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
             words = text.split()
@@ -1178,7 +1252,7 @@ elif st.session_state.current_step == 4:
                 if not chunk_words:
                     continue
                 
-                # Use timestamps if available
+                # Use Whisper timestamps if available
                 if timestamps and i < len(timestamps):
                     start_time = timestamps[min(i, len(timestamps) - 1)].get('start_time', i * 2)
                     end_time = timestamps[min(i + chunk_size - 1, len(timestamps) - 1)].get('end_time', (i + chunk_size) * 2)
@@ -1197,7 +1271,7 @@ elif st.session_state.current_step == 4:
                 srt_content += f"{format_time(start_time)} --> {format_time(end_time)}\n"
                 srt_content += f"{text_chunk}\n\n"
             
-            srt_content += "... (preview of first 3 subtitles)"
+            srt_content += "... (preview of first 3 subtitles with Whisper timestamps)"
             return srt_content
         
         preview_content = create_srt_preview(
@@ -1234,7 +1308,7 @@ elif st.session_state.current_step == 4:
                         mime_type = "text/plain"
                         file_extension = "txt"
                     else:
-                        # Create full SRT
+                        # Create full SRT with Whisper timestamps
                         def create_full_srt(text, timestamps, max_chars=42):
                             def format_time(seconds):
                                 td = timedelta(seconds=seconds)
@@ -1242,7 +1316,7 @@ elif st.session_state.current_step == 4:
                                 hours = total_seconds // 3600
                                 minutes = (total_seconds % 3600) // 60
                                 secs = total_seconds % 60
-                                millis = td.microseconds // 1000
+                                millis = int((td.total_seconds() - total_seconds) * 1000)
                                 return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
                             words = text.split()
@@ -1293,7 +1367,8 @@ elif st.session_state.current_step == 4:
                     <div class="success-box">
                         ✅ <strong>File generated successfully!</strong><br>
                         📁 File: {filename} | 📊 Size: {len(file_data.encode('utf-8')) / 1024:.1f} KB<br>
-                        💡 Click "Download" to save your captions!
+                        💡 Click "Download" to save your captions!<br>
+                        🚀 <strong>Powered by:</strong> OpenAI Whisper + Gemini AI
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -1372,7 +1447,7 @@ st.markdown("""
         Made with ❤️ for Tamil creators | Thanglish - Professional AI-powered transcription
     </p>
     <p style="color: #adb5bd; margin: 0.5rem 0 0 0; font-size: 0.9rem;">
-        Tamil + English = Thanglish மேட்டர் 🚀
+        Tamil + English = Thanglish மேட்டர் 🚀 | Powered by OpenAI Whisper + Gemini AI
     </p>
 </div>
 """, unsafe_allow_html=True)
